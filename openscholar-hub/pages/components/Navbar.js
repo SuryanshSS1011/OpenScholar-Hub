@@ -1,72 +1,77 @@
-import Link from 'next/link';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-
-  const toggleMenu = () => setIsOpen(!isOpen);
+  const { user, login, logout } = useAuth();
 
   return (
-    <nav className="bg-white shadow-md fixed w-full z-10 top-0 left-0">
-      <div className="container mx-auto flex justify-between items-center p-4">
-        <Link href="/">
-          <h1 className="text-2xl font-bold cursor-pointer text-blue-600">OpenScholar Hub</h1>
-        </Link>
-
-        {/* Hamburger Menu for Mobile */}
-        <div className="md:hidden">
-          <button onClick={toggleMenu} className="focus:outline-none">
-            {isOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
+    <nav className="bg-white shadow-lg fixed w-full z-10 top-0 left-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex-shrink-0 flex items-center">
+            <Link href="/">
+              <h1 className="text-xl font-bold cursor-pointer">OpenScholar Hub</h1>
+            </Link>
+          </div>
+          <div className="hidden md:flex items-center space-x-4">
+            <Link href="/" className="text-gray-600 hover:text-black">Home</Link>
+            <Link href="/about" className="text-gray-600 hover:text-black">About</Link>
+            <Link href="/contact" className="text-gray-600 hover:text-black">Contact</Link>
+            {user ? (
+              <button 
+                onClick={logout} 
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Logout
+              </button>
+            ) : (
+              <button 
+                onClick={login} 
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
+          <div className="flex items-center md:hidden">
+            <button onClick={() => setIsOpen(!isOpen)}>
+              {isOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
-
-        {/* Links for Desktop */}
-        <ul className="hidden md:flex space-x-6">
-          <li>
-            <Link href="/">
-              <span className="text-gray-600 hover:text-blue-600 transition-colors duration-300 cursor-pointer">Home</span>
-            </Link>
-          </li>
-          <li>
-            <Link href="/dashboard">
-              <span className="text-gray-600 hover:text-blue-600 transition-colors duration-300 cursor-pointer">Dashboard</span>
-            </Link>
-          </li>
-          <li>
-            <Link href="/profile">
-              <span className="text-gray-600 hover:text-blue-600 transition-colors duration-300 cursor-pointer">Profile</span>
-            </Link>
-          </li>
-        </ul>
       </div>
-
-      {/* Dropdown Menu for Mobile */}
       {isOpen && (
-        <motion.ul
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
-          className="md:hidden bg-white shadow-md rounded-lg mx-4 mt-2"
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          exit={{ opacity: 0 }} 
+          className="md:hidden"
         >
-          <li className="border-b border-gray-200">
-            <Link href="/">
-              <span className="block text-gray-600 hover:text-blue-600 transition-colors duration-300 cursor-pointer py-2 px-4">Home</span>
-            </Link>
-          </li>
-          <li className="border-b border-gray-200">
-            <Link href="/dashboard">
-              <span className="block text-gray-600 hover:text-blue-600 transition-colors duration-300 cursor-pointer py-2 px-4">Dashboard</span>
-            </Link>
-          </li>
-          <li>
-            <Link href="/profile">
-              <span className="block text-gray-600 hover:text-blue-600 transition-colors duration-300 cursor-pointer py-2 px-4">Profile</span>
-            </Link>
-          </li>
-        </motion.ul>
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <Link href="/" className="block text-gray-600 hover:text-black">Home</Link>
+            <Link href="/about" className="block text-gray-600 hover:text-black">About</Link>
+            <Link href="/contact" className="block text-gray-600 hover:text-black">Contact</Link>
+            {user ? (
+              <button 
+                onClick={logout} 
+                className="w-full text-left px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Logout
+              </button>
+            ) : (
+              <button 
+                onClick={login} 
+                className="w-full text-left px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Sign In
+              </button>
+            )}
+          </div>
+        </motion.div>
       )}
     </nav>
   );

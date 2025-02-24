@@ -1,0 +1,40 @@
+import { createContext, useContext, useEffect, useState } from 'react';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
+import { auth, googleProvider } from '@/firebaseconfig';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const googleSignIn = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, googleSignIn, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => useContext(AuthContext);
