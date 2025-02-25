@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { format } from 'date-fns';
 import Head from 'next/head';
 import { useAuth } from '@/context/AuthContext';
 import { withAuth } from '@/middleware/authMiddleware';
-import Layout from './components/Layout';
+import Layout from '@/components/Layout';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -14,32 +15,10 @@ const Dashboard = () => {
     const fetchProjects = async () => {
       try {
         // This would be replaced with an actual API call in production
-        setTimeout(() => {
-          setProjects([
-            {
-              id: '1',
-              title: 'Climate Change Research',
-              status: 'In Progress',
-              collaborators: 5,
-              lastUpdated: '2025-02-20',
-            },
-            {
-              id: '2',
-              title: 'Machine Learning Applications in Medicine',
-              status: 'Planning',
-              collaborators: 3,
-              lastUpdated: '2025-02-18',
-            },
-            {
-              id: '3',
-              title: 'Open Source Educational Resources',
-              status: 'Completed',
-              collaborators: 8,
-              lastUpdated: '2025-02-15',
-            },
-          ]);
-          setLoading(false);
-        }, 1000);
+        const response = await fetch('/api/projects');
+        const data = await response.json();
+        setProjects(data);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching projects:', error);
         setLoading(false);
@@ -73,7 +52,7 @@ const Dashboard = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="mt-1 text-sm text-gray-500">
-              Welcome back, {user?.displayName || 'Scholar'}
+              Welcome back, {user?.displayName || 'valued researcher'}
             </p>
           </div>
           <div className="mt-4 md:mt-0">
@@ -91,13 +70,15 @@ const Dashboard = () => {
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <dt className="text-sm font-medium text-gray-500 truncate">Active Projects</dt>
-              <dd className="mt-1 text-3xl font-semibold text-gray-900">5</dd>
+              <dd className="mt-1 text-3xl font-semibold text-gray-900">{projects.filter(project => project.status === 'In Progress').length}</dd>
             </div>
           </div>
           <div className="bg-white overflow-hidden shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
               <dt className="text-sm font-medium text-gray-500 truncate">Collaborators</dt>
-              <dd className="mt-1 text-3xl font-semibold text-gray-900">12</dd>
+              <dd className="mt-1 text-3xl font-semibold text-gray-900">
+                {projects.reduce((total, project) => total + project.collaborators, 0)}
+              </dd>
             </div>
           </div>
           <div className="bg-white overflow-hidden shadow rounded-lg">
@@ -164,7 +145,7 @@ const Dashboard = () => {
                             <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                           </svg>
                           <p>
-                            Last updated on <time dateTime={project.lastUpdated}>{project.lastUpdated}</time>
+                            Last updated on <time dateTime={project.lastUpdated}>{format(new Date(project.lastUpdated), 'PPP')}</time>
                           </p>
                         </div>
                       </div>
