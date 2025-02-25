@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { format } from 'date-fns';
+
 import Head from 'next/head';
 import { useAuth } from '@/context/AuthContext';
 import { withAuth } from '@/middleware/authMiddleware';
-import Layout from '@/components/Layout';
+import Layout from '@/pages/components/Layout';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -16,6 +16,9 @@ const Dashboard = () => {
       try {
         // This would be replaced with an actual API call in production
         const response = await fetch('/api/projects');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
         const data = await response.json();
         setProjects(data);
         setLoading(false);

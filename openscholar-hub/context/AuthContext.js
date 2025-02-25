@@ -1,7 +1,10 @@
+// @/context/AuthContext.js
 import { createContext, useContext, useEffect, useState } from 'react';
 import { 
   onAuthStateChanged, 
-  signInWithPopup, 
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   GoogleAuthProvider
 } from 'firebase/auth';
@@ -34,18 +37,53 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
+  // Email/Password Sign Up
+  const emailSignUp = async (email, password) => {
+    setError(null);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log(`User ${userCredential.user.email} signed up successfully`);
+      return userCredential.user;
+    } catch (error) {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      setError(errorMessage);
+      console.error(`Error ${errorCode}: ${errorMessage}`);
+      throw error;
+    }
+  };
+
+  // Email/Password Sign In
+  const emailSignIn = async (email, password) => {
+    setError(null);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log(`User ${userCredential.user.email} logged in successfully`);
+      return userCredential.user;
+    } catch (error) {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      setError(errorMessage);
+      console.error(`Error ${errorCode}: ${errorMessage}`);
+      throw error;
+    }
+  };
+
   // Google sign-in function
   const googleSignIn = async () => {
     setError(null);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      // You can access additional user info and tokens here if needed
+      // Get the Google Access Token to access the Google API
       const credential = GoogleAuthProvider.credentialFromResult(result);
       const token = credential.accessToken;
-      // The signed-in user info is in result.user
+      console.log(`User ${result.user.email} logged in with Google`);
       return result.user;
     } catch (error) {
       setError(error.message);
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      
       // Handle specific errors
       if (error.code === 'auth/popup-closed-by-user') {
         console.log('Sign-in popup was closed by the user');
@@ -53,7 +91,14 @@ export const AuthProvider = ({ children }) => {
       if (error.code === 'auth/cancelled-popup-request') {
         console.log('Multiple popup requests were triggered');
       }
-      throw error; // Re-throw to allow handling in components
+      
+      // The email of the user's account used
+      const email = error.customData?.email;
+      // The AuthCredential type that was used
+      const credential = GoogleAuthProvider.credentialFromError(error);
+      
+      console.error(`Error ${errorCode}: ${errorMessage}`);
+      throw error;
     }
   };
 
@@ -80,6 +125,8 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     error,
+    emailSignUp,
+    emailSignIn,
     googleSignIn,
     logout,
     updateUserProfile,
