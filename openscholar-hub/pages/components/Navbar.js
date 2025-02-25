@@ -46,10 +46,9 @@ const Navbar = () => {
     setIsOpen(false);
   };
 
-  const navbarClasses = useMemo(() => 
-    `fixed w-full z-10 top-0 left-0 transition-all duration-300 ${
-      scrolled ? 'bg-white shadow-md' : 'bg-white/90 backdrop-blur-sm'
-    }`, [scrolled]);
+  const navbarClasses = `fixed w-full z-10 top-0 left-0 transition-all duration-300 ${
+    scrolled ? 'bg-white shadow-md' : 'bg-white/90 backdrop-blur-sm'
+  }`;
 
   return (
     <nav className={navbarClasses}>
@@ -203,7 +202,7 @@ const Navbar = () => {
             {user ? (
               <div className="flex items-center px-3">
                 <div className="flex-shrink-0">
-                  {user.photoURL ? (
+                  {user?.photoURL ? (
                     <img 
                       className="h-10 w-10 rounded-full" 
                       src={user.photoURL} 
