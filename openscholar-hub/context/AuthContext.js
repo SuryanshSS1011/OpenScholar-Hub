@@ -80,24 +80,29 @@ export const AuthProvider = ({ children }) => {
       console.log(`User ${result.user.email} logged in with Google`);
       return result.user;
     } catch (error) {
-      setError(error.message);
-      const errorCode = error.code;
-      const errorMessage = error.message;
+      // Don't set error for user-initiated cancellations
+      if (error.code !== 'auth/popup-closed-by-user' && 
+          error.code !== 'auth/cancelled-popup-request') {
+        setError(error.message);
+      }
       
-      // Handle specific errors
       if (error.code === 'auth/popup-closed-by-user') {
         console.log('Sign-in popup was closed by the user');
-      }
-      if (error.code === 'auth/cancelled-popup-request') {
+      } else if (error.code === 'auth/cancelled-popup-request') {
         console.log('Multiple popup requests were triggered');
+      } else {
+        // Handle other errors
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // The email of the user's account used
+        const email = error.customData?.email;
+        // The AuthCredential type that was used
+        const credential = GoogleAuthProvider.credentialFromError(error);
+        
+        console.error(`Error ${errorCode}: ${errorMessage}`);
       }
       
-      // The email of the user's account used
-      const email = error.customData?.email;
-      // The AuthCredential type that was used
-      const credential = GoogleAuthProvider.credentialFromError(error);
-      
-      console.error(`Error ${errorCode}: ${errorMessage}`);
+      // We need to re-throw the error to let the component handle it appropriately
       throw error;
     }
   };

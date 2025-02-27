@@ -1,4 +1,3 @@
-// @/pages/auth/signin.js
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
@@ -52,10 +51,12 @@ const SignIn = () => {
       setIsLoading(true);
       setError(null);
       await googleSignIn();
-      router.push('/dashboard');
+      // Will redirect automatically if successful
     } catch (error) {
       console.error('Google sign in error:', error);
-      if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+      // Only show error message for actual errors, not user cancellations
+      if (error.code !== 'auth/popup-closed-by-user' && 
+          error.code !== 'auth/cancelled-popup-request') {
         setError('Failed to sign in with Google. Please try again.');
       }
     } finally {

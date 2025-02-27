@@ -1,10 +1,11 @@
+// @/pages/components/Navbar.js
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, X, User, LogOut, BookOpen, Home, Search } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import Image from 'next/image'
+import Image from 'next/image';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,9 +30,10 @@ const Navbar = () => {
   const handleGoogleSignIn = async () => {
     try {
       await googleSignIn();
-      router.push('/dashboard');
+      // AuthContext's onAuthStateChanged will handle redirection
     } catch (error) {
       console.error('Google sign in error:', error);
+      // No need to show errors for user cancellations
       // Error will be handled in AuthContext
     }
   };
@@ -117,7 +119,8 @@ const Navbar = () => {
                     <Link href="/profile" className="relative">
                       <span className="inline-block h-8 w-8 rounded-full overflow-hidden bg-gray-200 border border-gray-300">
                         {user.photoURL ? (
-                          <Image 
+                          <Image
+                            layout="fill"
                             src={user.photoURL} 
                             alt={user.displayName || 'User profile'} 
                             className="h-full w-full object-cover"
@@ -232,7 +235,8 @@ const Navbar = () => {
               <div className="flex items-center px-3">
                 <div className="flex-shrink-0">
                   {user?.photoURL ? (
-                    <Image 
+                    <Image
+                      layout="fixed"
                       className="h-10 w-10 rounded-full" 
                       src={user.photoURL} 
                       alt={user.displayName || 'User profile'} 
