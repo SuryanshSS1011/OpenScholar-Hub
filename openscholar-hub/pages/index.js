@@ -143,7 +143,7 @@ export default function Home() {
                 </Link>
               ) : (
                 <Link
-                  href="/auth/signin"
+                  href="/auth/signup"
                   className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50"
                 >
                   Sign Up for Free
