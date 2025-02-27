@@ -1,9 +1,11 @@
+// @/pages/components/Navbar.js
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, X, User, LogOut, BookOpen, Home, Search } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import Image from 'next/image'
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -114,7 +116,7 @@ const Navbar = () => {
                     <Link href="/profile" className="relative">
                       <span className="inline-block h-8 w-8 rounded-full overflow-hidden bg-gray-200 border border-gray-300">
                         {user.photoURL ? (
-                          <img 
+                          <Image 
                             src={user.photoURL} 
                             alt={user.displayName || 'User profile'} 
                             className="h-full w-full object-cover"
@@ -136,12 +138,12 @@ const Navbar = () => {
                 </div>
               </div>
             ) : (
-              <button 
-                onClick={handleSignIn}
+              <Link 
+                href="/auth/signin"
                 className="ml-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Sign In
-              </button>
+              </Link>
             )}
           </div>
 
@@ -203,7 +205,7 @@ const Navbar = () => {
               <div className="flex items-center px-3">
                 <div className="flex-shrink-0">
                   {user?.photoURL ? (
-                    <img 
+                    <Image 
                       className="h-10 w-10 rounded-full" 
                       src={user.photoURL} 
                       alt={user.displayName || 'User profile'} 
@@ -230,12 +232,12 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="px-3 py-3">
-                <button 
-                  onClick={handleSignIn}
+                <Link 
+                  href="/auth/signin"
                   className="w-full flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  Sign In with Google
-                </button>
+                  Sign In
+                </Link>
                 <p className="mt-2 text-xs text-center text-gray-500">
                   Sign in to access all features
                 </p>

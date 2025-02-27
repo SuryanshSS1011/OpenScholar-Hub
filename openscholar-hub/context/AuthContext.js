@@ -1,10 +1,10 @@
-// @/context/AuthContext.js
 import { createContext, useContext, useEffect, useState } from 'react';
 import { 
   onAuthStateChanged, 
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
   GoogleAuthProvider
 } from 'firebase/auth';
@@ -114,6 +114,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Password reset function
+  const resetPassword = async (email) => {
+    setError(null);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return true;
+    } catch (error) {
+      setError(error.message);
+      console.error('Password reset error:', error);
+      throw error;
+    }
+  };
+
   // Create a user profile function (can be extended later)
   const updateUserProfile = async (profile) => {
     // This is a placeholder for future functionality
@@ -128,6 +141,7 @@ export const AuthProvider = ({ children }) => {
     emailSignUp,
     emailSignIn,
     googleSignIn,
+    resetPassword,
     logout,
     updateUserProfile,
   };
