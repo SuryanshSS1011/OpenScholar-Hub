@@ -1,5 +1,7 @@
+import tailwindConfig from './tailwind.config'
+
 /** @type {import('tailwindcss').Config} */
-export default {
+export default tailwindConfig = {
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",

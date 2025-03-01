@@ -1,4 +1,3 @@
-// @/pages/components/Navbar.js
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, X, User, LogOut, BookOpen, Home, Search } from 'lucide-react';
@@ -237,9 +236,11 @@ const Navbar = () => {
                   {user?.photoURL ? (
                     <Image
                       layout="fixed"
-                      className="h-10 w-10 rounded-full" 
+                      className="h-full w-full object-cover"
                       src={user.photoURL} 
                       alt={user.displayName || 'User profile'} 
+                      width={32}  // Add appropriate width
+                      height={32} // Add appropriate height
                     />
                   ) : (
                     <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-gray-200">
