@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useAuth } from '@/context/AuthContext';
 import { withAuth } from '@/middleware/authMiddleware';
-import Layout from '@/pages/components/Layout';
+import Layout from '@/components/Layout';
 
 const Dashboard = () => {
   const { user } = useAuth();

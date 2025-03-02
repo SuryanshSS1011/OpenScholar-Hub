@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import Layout from './components/Layout';
+import Layout from '../components/Layout';
 import { Users, BookOpen, Database, Shield, GraduationCap, Globe } from 'lucide-react';
 
 const AboutPage = () => {

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import Layout from './components/Layout';
+import Layout from '../components/Layout';
 import { Search, Filter, BookOpen, Users, Calendar, ArrowUpRight } from 'lucide-react';
 
 const ProjectsPage = () => {

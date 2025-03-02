@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import Layout from './components/Layout';
+import Layout from '../components/Layout';
 
 export default function Home() {
   const { user, loading } = useAuth();
