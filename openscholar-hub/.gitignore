@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Firebase Admin SDK
+/openscholar-hub-firebase-adminsdk-fbsvc-94c2aab9b8.json
