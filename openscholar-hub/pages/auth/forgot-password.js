@@ -1,21 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { withPublicAuth } from '@/middleware/authMiddleware';
 
 const ForgotPassword = () => {
-  const { resetPassword } = useAuth();
+  const { resetPassword, error: authError } = useAuth();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+
+  // Sync auth context error
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!email) {
       setError('Please enter your email address');
+      return;
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
       return;
     }
     
@@ -26,19 +40,11 @@ const ForgotPassword = () => {
       
       await resetPassword(email);
       
-      setSuccessMessage('Password reset email has been sent. Please check your inbox.');
+      setSuccessMessage('Password reset email has been sent. Please check your inbox and spam folder.');
       setEmail(''); // Clear the form
     } catch (error) {
+      // Error is handled in AuthContext and will be reflected via authError
       console.error('Password reset error:', error);
-      
-      // Friendly error messages
-      if (error.code === 'auth/user-not-found') {
-        setError('No account found with this email address.');
-      } else if (error.code === 'auth/invalid-email') {
-        setError('Please enter a valid email address.');
-      } else {
-        setError('Failed to send password reset email. Please try again.');
-      }
     } finally {
       setIsLoading(false);
     }

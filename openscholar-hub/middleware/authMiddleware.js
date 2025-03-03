@@ -1,92 +1,81 @@
-import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
-// Higher Order Component to protect routes that require authentication
-export const withAuth = (Component) => {
-  const AuthProtected = (props) => {
+// HOC to protect routes that require authentication
+export function withAuth(Component) {
+  return function AuthenticatedComponent(props) {
     const { user, loading } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
-      // Check authentication state when component mounts
+      // Check auth state once loading is complete
       if (!loading && !user) {
-        // Redirect to sign-in if user is not authenticated
+        // Store the page they were trying to access
+        sessionStorage.setItem('redirectAfterLogin', router.asPath);
+        // Redirect to login
         router.push('/auth/signin');
       }
     }, [user, loading, router]);
 
-    // Show loading state while checking authentication
+    // While checking auth state, show loading state
     if (loading) {
       return (
-        <div className="min-h-screen flex justify-center items-center bg-gray-50">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="rounded-full bg-blue-400 h-12 w-12 mb-4"></div>
-            <div className="h-4 bg-blue-400 rounded w-48 mb-2"></div>
-            <div className="h-3 bg-blue-300 rounded w-32"></div>
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <p className="mt-4 text-gray-700">Loading...</p>
           </div>
         </div>
       );
     }
-    
-    // If authentication check is complete but no user, show nothing
-    // (will redirect to sign-in page)
+
+    // If not authenticated, show nothing (will redirect)
     if (!user) {
       return null;
     }
 
-    // If user is authenticated, render the wrapped component
+    // If authenticated, show the protected component
     return <Component {...props} />;
   };
+}
 
-  // Copy getInitialProps from the wrapped component if it exists
-  if (Component.getInitialProps) {
-    AuthProtected.getInitialProps = Component.getInitialProps;
-  }
-
-  return AuthProtected;
-};
-
-// Higher Order Component to redirect authenticated users from pages
-// they shouldn't access when logged in (like the sign-in page)
-export const withPublicAuth = (Component) => {
-  const PublicRoute = (props) => {
+// HOC for public routes that should redirect authenticated users
+export function withPublicAuth(Component) {
+  return function PublicComponent(props) {
     const { user, loading } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
-      // If user is logged in, redirect to dashboard
+      // Check if already logged in and if we need to redirect somewhere
       if (!loading && user) {
-        router.replace('/dashboard');
+        // Check if there's a stored redirect path
+        const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+        if (redirectPath) {
+          sessionStorage.removeItem('redirectAfterLogin');
+          router.push(redirectPath);
+        } else {
+          // Default redirect to dashboard
+          router.push('/dashboard');
+        }
       }
     }, [user, loading, router]);
 
-    // Show loading state while checking authentication
-    if (loading) {
+    // Show loading state only briefly or if not already authenticated
+    if (loading && !user) {
       return (
-        <div className="min-h-screen flex justify-center items-center bg-gray-50">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="rounded-full bg-blue-400 h-12 w-12 mb-4"></div>
-            <div className="h-4 bg-blue-400 rounded w-48 mb-2"></div>
-            <div className="h-3 bg-blue-300 rounded w-32"></div>
-          </div>
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       );
     }
-    
-    // If user is authenticated, show nothing (will redirect)
+
+    // If already authenticated, don't show anything (will redirect)
     if (user) {
       return null;
     }
 
-    // If not authenticated, render the public component
+    // If not authenticated and done loading, show the public component
     return <Component {...props} />;
   };
-
-  // Copy getInitialProps from the wrapped component if it exists
-  if (Component.getInitialProps) {
-    PublicRoute.getInitialProps = Component.getInitialProps;
-  }
-
-  return PublicRoute;
-};
+}

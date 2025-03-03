@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { withPublicAuth } from '@/middleware/authMiddleware';
 
 const SignUp = () => {
-  const { emailSignUp, googleSignIn } = useAuth();
+  const { emailSignUp, googleSignIn, error: authError, user } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -15,6 +15,20 @@ const SignUp = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Sync auth context error
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
 
   // Handle email/password sign up
   const handleEmailSignUp = async (e) => {
@@ -40,20 +54,10 @@ const SignUp = () => {
       setIsLoading(true);
       setError(null);
       await emailSignUp(email, password);
-      router.push('/dashboard');
+      // Auth state change will handle redirection
     } catch (error) {
       console.error('Sign up error:', error);
-      
-      // Friendly error messages
-      if (error.code === 'auth/email-already-in-use') {
-        setError('This email is already in use. Try signing in instead.');
-      } else if (error.code === 'auth/invalid-email') {
-        setError('Please enter a valid email address.');
-      } else if (error.code === 'auth/weak-password') {
-        setError('Password is too weak. Please choose a stronger password.');
-      } else {
-        setError('Failed to create account. Please try again.');
-      }
+      // Error is already handled in AuthContext
     } finally {
       setIsLoading(false);
     }
@@ -64,14 +68,24 @@ const SignUp = () => {
     try {
       setIsLoading(true);
       setError(null);
+      
+      // Add a timeout to detect potential issues with popup blockers
+      const timeoutId = setTimeout(() => {
+        console.log('Google sign-in is taking longer than expected. Checking for popup blockers...');
+        setError('Sign-in popup might be blocked. Please check your browser settings.');
+      }, 5000);
+      
       await googleSignIn();
-      // Will redirect automatically if successful
+      clearTimeout(timeoutId);
+      
+      // Auth state change will handle redirection
     } catch (error) {
       console.error('Google sign in error:', error);
-      // Only show error message for actual errors, not user cancellations
-      if (error.code !== 'auth/popup-closed-by-user' && 
-          error.code !== 'auth/cancelled-popup-request') {
-        setError('Failed to sign in with Google. Please try again.');
+      // Errors should be handled in AuthContext
+      
+      // Additional check for common issues
+      if (error.message && error.message.includes('network')) {
+        setError('Network error. Please check your internet connection and try again.');
       }
     } finally {
       setIsLoading(false);
@@ -223,6 +237,11 @@ const SignUp = () => {
                     </span>
                   )}
                 </button>
+              </div>
+              
+              {/* Add popup blocker notice */}
+              <div className="mt-2 text-xs text-center text-gray-500">
+                Having trouble? Please ensure popup blockers are disabled.
               </div>
             </div>
 

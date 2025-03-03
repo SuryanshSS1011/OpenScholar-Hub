@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { withPublicAuth } from '@/middleware/authMiddleware';
 
 const SignIn = () => {
-  const { emailSignIn, googleSignIn } = useAuth();
+  const { emailSignIn, googleSignIn, error: authError, user } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -14,6 +14,20 @@ const SignIn = () => {
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // Sync auth context error
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
+
+  // Redirect if user is already logged in
+  useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
 
   // Handle email/password sign in
   const handleEmailSignIn = async (e) => {
@@ -28,18 +42,10 @@ const SignIn = () => {
       setIsLoading(true);
       setError(null);
       await emailSignIn(email, password);
-      router.push('/dashboard');
+      // The auth state change will trigger navigation
     } catch (error) {
       console.error('Sign in error:', error);
-      
-      // Friendly error messages
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        setError('Invalid email or password. Please try again.');
-      } else if (error.code === 'auth/invalid-email') {
-        setError('Please enter a valid email address.');
-      } else {
-        setError('Failed to sign in. Please try again.');
-      }
+      // Error is already handled in AuthContext
     } finally {
       setIsLoading(false);
     }
@@ -50,14 +56,24 @@ const SignIn = () => {
     try {
       setIsLoading(true);
       setError(null);
+      
+      // Add a timeout to detect potential issues with popup blockers
+      const timeoutId = setTimeout(() => {
+        console.log('Google sign-in is taking longer than expected. Checking for popup blockers...');
+        setError('Sign-in popup might be blocked. Please check your browser settings.');
+      }, 5000);
+      
       await googleSignIn();
-      // Will redirect automatically if successful
+      clearTimeout(timeoutId);
+      
+      // Auth state change will handle redirect
     } catch (error) {
       console.error('Google sign in error:', error);
-      // Only show error message for actual errors, not user cancellations
-      if (error.code !== 'auth/popup-closed-by-user' && 
-          error.code !== 'auth/cancelled-popup-request') {
-        setError('Failed to sign in with Google. Please try again.');
+      // Errors are handled in AuthContext
+      
+      // Additional check for common issues
+      if (error.message && error.message.includes('network')) {
+        setError('Network error. Please check your internet connection and try again.');
       }
     } finally {
       setIsLoading(false);
@@ -209,6 +225,11 @@ const SignIn = () => {
                     </span>
                   )}
                 </button>
+              </div>
+              
+              {/* Add popup blocker notice */}
+              <div className="mt-2 text-xs text-center text-gray-500">
+                Having trouble? Please ensure popup blockers are disabled.
               </div>
             </div>
 
