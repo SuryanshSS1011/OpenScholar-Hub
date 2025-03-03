@@ -12,7 +12,8 @@ import {
   ArrowLeft, 
   Search,
   ChevronRight,
-  BookOpen
+  BookOpen,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -154,7 +155,7 @@ const CreateProject = () => {
         <meta name="description" content="Create a new research project on OpenScholar Hub" />
       </Head>
       
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <div className="flex items-center text-sm text-gray-500 mb-4">
             <Link href="/" className="hover:text-blue-600">
@@ -185,7 +186,7 @@ const CreateProject = () => {
         </div>
         
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+          <div className="px-4 py-5 sm:px-6 border-b border-gray-200 bg-gray-50">
             <h3 className="text-lg leading-6 font-medium text-gray-900">
               Project Details
             </h3>
@@ -194,269 +195,311 @@ const CreateProject = () => {
             </p>
           </div>
           
-          <form onSubmit={handleSubmit}>
-            <div className="px-4 py-5 sm:p-6">
-              <div className="grid grid-cols-1 gap-6">
-                <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                    Project Title
-                  </label>
+          <form onSubmit={handleSubmit} className="px-4 py-5 sm:p-6 space-y-6">
+            {/* Project Title */}
+            <div className="w-full">
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                Project Title <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="title"
+                id="title"
+                required
+                value={formData.title}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
+                placeholder="Enter a descriptive title for your project"
+              />
+            </div>
+            
+            {/* Description */}
+            <div className="w-full">
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                rows={4}
+                required
+                value={formData.description}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 resize-y"
+                placeholder="Describe your research project, goals, and methodology..."
+              />
+            </div>
+            
+            {/* Category */}
+            <div className="w-full">
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                Category <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="category"
+                name="category"
+                required
+                value={formData.category}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 bg-white"
+              >
+                <option value="">Select a category</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Environmental Science">Environmental Science</option>
+                <option value="Biology">Biology</option>
+                <option value="Physics">Physics</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Chemistry">Chemistry</option>
+                <option value="Social Sciences">Social Sciences</option>
+                <option value="Medicine">Medicine</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Humanities">Humanities</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            
+            {/* Visibility Options */}
+            <div className="w-full">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Visibility
+              </label>
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">
+                <div className="flex items-center">
                   <input
-                    type="text"
-                    name="title"
-                    id="title"
-                    required
-                    value={formData.title}
+                    id="visibility-private"
+                    name="visibility"
+                    type="radio"
+                    value="private"
+                    checked={formData.visibility === 'private'}
                     onChange={handleInputChange}
-                    className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 transition duration-150"
                   />
-                </div>
-                
-                <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                    Description
+                  <label htmlFor="visibility-private" className="ml-3 block text-sm font-medium text-gray-700">
+                    Private (Only visible to collaborators)
                   </label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    rows={4}
-                    value={formData.description}
+                </div>
+                <div className="flex items-center">
+                  <input
+                    id="visibility-public"
+                    name="visibility"
+                    type="radio"
+                    value="public"
+                    checked={formData.visibility === 'public'}
                     onChange={handleInputChange}
-                    className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                    placeholder="Describe your research project, goals, and methodology..."
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 transition duration-150"
                   />
-                </div>
-                
-                <div>
-                  <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                    Category
+                  <label htmlFor="visibility-public" className="ml-3 block text-sm font-medium text-gray-700">
+                    Public (Visible to all OpenScholar Hub users)
                   </label>
-                  <select
-                    id="category"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  >
-                    <option value="">Select a category</option>
-                    <option value="Computer Science">Computer Science</option>
-                    <option value="Environmental Science">Environmental Science</option>
-                    <option value="Biology">Biology</option>
-                    <option value="Physics">Physics</option>
-                    <option value="Mathematics">Mathematics</option>
-                    <option value="Chemistry">Chemistry</option>
-                    <option value="Social Sciences">Social Sciences</option>
-                    <option value="Medicine">Medicine</option>
-                    <option value="Engineering">Engineering</option>
-                    <option value="Humanities">Humanities</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Visibility
-                  </label>
-                  <div className="mt-2">
-                    <div className="flex items-center">
-                      <input
-                        id="visibility-private"
-                        name="visibility"
-                        type="radio"
-                        value="private"
-                        checked={formData.visibility === 'private'}
-                        onChange={handleInputChange}
-                        className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
-                      />
-                      <label htmlFor="visibility-private" className="ml-3 block text-sm font-medium text-gray-700">
-                        Private (Only visible to collaborators)
-                      </label>
-                    </div>
-                    <div className="flex items-center mt-2">
-                      <input
-                        id="visibility-public"
-                        name="visibility"
-                        type="radio"
-                        value="public"
-                        checked={formData.visibility === 'public'}
-                        onChange={handleInputChange}
-                        className="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300"
-                      />
-                      <label htmlFor="visibility-public" className="ml-3 block text-sm font-medium text-gray-700">
-                        Public (Visible to all OpenScholar Hub users)
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
-                    Tags
-                  </label>
-                  <div className="mt-1 flex rounded-md shadow-sm">
-                    <input
-                      type="text"
-                      name="tags"
-                      id="tags"
-                      value={tag}
-                      onChange={(e) => setTag(e.target.value)}
-                      className="focus:ring-blue-500 focus:border-blue-500 flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300"
-                      placeholder="Add tags to help others find your project"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddTag}
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-r-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      <Plus className="-ml-1 mr-2 h-5 w-5" />
-                      Add
-                    </button>
-                  </div>
-                  
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {formData.tags.map((t) => (
-                      <span key={t} className="inline-flex rounded-full items-center py-0.5 pl-2.5 pr-1 text-sm font-medium bg-blue-100 text-blue-700">
-                        {t}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveTag(t)}
-                          className="flex-shrink-0 ml-0.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:bg-blue-500 focus:text-white"
-                        >
-                          <span className="sr-only">Remove {t} tag</span>
-                          <Minus className="h-3 w-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Related Research Section */}
-                <div className="border-t border-gray-200 pt-5">
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">Related Research</h3>
-                      <p className="text-sm text-gray-500">
-                        Link this project to existing academic research
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowResearchSearch(!showResearchSearch)}
-                      className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      <Book className="mr-2 h-4 w-4 text-gray-500" />
-                      {showResearchSearch ? 'Hide Search' : 'Add Research'}
-                    </button>
-                  </div>
-                  
-                  {showResearchSearch && (
-                    <div className="mb-6 bg-gray-50 p-4 rounded-md">
-                      <form onSubmit={handleResearchSearch} className="flex space-x-2 mb-4">
-                        <div className="flex-grow relative rounded-md shadow-sm">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="h-5 w-5 text-gray-400" />
-                          </div>
-                          <input
-                            type="text"
-                            value={researchQuery}
-                            onChange={(e) => setResearchQuery(e.target.value)}
-                            className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md"
-                            placeholder="Search for papers, authors, or keywords..."
-                          />
-                        </div>
-                        <button
-                          type="submit"
-                          disabled={researchLoading}
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          {researchLoading ? 'Searching...' : 'Search'}
-                        </button>
-                      </form>
-                      
-                      {researchResults.length > 0 && (
-                        <div className="mt-4 divide-y divide-gray-200">
-                          {researchResults.map((result) => (
-                            <div key={result.id} className="py-3 flex justify-between items-center">
-                              <div>
-                                <h4 className="text-sm font-medium text-gray-900">{result.title}</h4>
-                                <p className="text-xs text-gray-500">
-                                  {result.authors} • {result.year}
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleAddResearch(result)}
-                                disabled={formData.relatedResearch.some(r => r.id === result.id)}
-                                className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded
-                                  ${formData.relatedResearch.some(r => r.id === result.id)
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                                  }`}
-                              >
-                                {formData.relatedResearch.some(r => r.id === result.id) ? 'Added' : 'Add'}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      
-                      <div className="mt-4 text-sm text-gray-500 text-center">
-                        <Link href="/research" className="text-blue-600 hover:underline flex items-center justify-center">
-                          <BookOpen className="h-4 w-4 mr-1" />
-                          Search more on OpenScholar Research
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Display selected research papers */}
-                  <div>
-                    {formData.relatedResearch.length > 0 ? (
-                      <div className="space-y-2">
-                        {formData.relatedResearch.map((paper) => (
-                          <div key={paper.id} className="border border-gray-200 rounded-md p-3 flex justify-between items-center">
-                            <div className="flex items-start">
-                              <BookOpen className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
-                              <div>
-                                <h4 className="text-sm font-medium text-gray-900">{paper.title}</h4>
-                                <Link 
-                                  href={`/research/article/${paper.id}`}
-                                  className="text-xs text-blue-600 hover:underline"
-                                >
-                                  View paper
-                                </Link>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveResearch(paper.id)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 italic">
-                        No research papers linked to this project yet
-                      </p>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
             
-            <div className="px-4 py-3 bg-gray-50 text-right sm:px-6 border-t border-gray-200">
+            {/* Tags */}
+            <div>
+              <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">
+                Tags
+              </label>
+              <div className="flex rounded-md shadow-sm">
+                <input
+                  type="text"
+                  name="tags"
+                  id="tags"
+                  value={tag}
+                  onChange={(e) => setTag(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  className="w-full px-4 py-2 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
+                  placeholder="Add keywords to help others find your project"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTag}
+                  className="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 rounded-r-lg shadow-sm text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
+                >
+                  Add
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">Press Enter or click Add to add a tag</p>
+              
+              {formData.tags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {formData.tags.map((t) => (
+                    <span key={t} className="inline-flex rounded-full items-center py-0.5 pl-2.5 pr-1 text-sm font-medium bg-blue-100 text-blue-700">
+                      {t}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(t)}
+                        className="flex-shrink-0 ml-0.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:bg-blue-500 focus:text-white"
+                      >
+                        <span className="sr-only">Remove {t} tag</span>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Related Research Section */}
+            <div className="pt-4 border-t border-gray-200">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">Related Research</h3>
+                  <p className="text-sm text-gray-500">
+                    Link this project to existing academic research
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowResearchSearch(!showResearchSearch)}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
+                >
+                  {showResearchSearch ? (
+                    <>
+                      <X className="mr-1.5 h-4 w-4 text-gray-500" />
+                      Hide Search
+                    </>
+                  ) : (
+                    <>
+                      <Search className="mr-1.5 h-4 w-4 text-gray-500" />
+                      Find Papers
+                    </>
+                  )}
+                </button>
+              </div>
+              
+                              {/* Research Search */}
+              {showResearchSearch && (
+                <div className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <form onSubmit={handleResearchSearch} className="flex gap-2">
+                    <div className="flex-grow relative rounded-lg shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        value={researchQuery}
+                        onChange={(e) => setResearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
+                        placeholder="Search for papers, authors, or keywords..."
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={researchLoading || !researchQuery.trim()}
+                      className="px-4 py-2 rounded-lg border border-transparent shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+                    >
+                      {researchLoading ? 'Searching...' : 'Search'}
+                    </button>
+                  </form>
+                  
+                  {/* Search Results */}
+                  {researchResults.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      <h4 className="text-sm font-medium text-gray-700">Search Results</h4>
+                      <div className="divide-y divide-gray-200 border border-gray-200 rounded-lg bg-white">
+                        {researchResults.map((result) => (
+                          <div key={result.id} className="py-3 px-4 flex justify-between items-center">
+                            <div className="pr-2">
+                              <h4 className="text-sm font-medium text-gray-900 line-clamp-1">{result.title}</h4>
+                              <p className="text-xs text-gray-500">
+                                {result.authors} • {result.year}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleAddResearch(result)}
+                              disabled={formData.relatedResearch.some(r => r.id === result.id)}
+                              className={`flex-shrink-0 inline-flex items-center px-2 py-1 text-xs font-medium rounded
+                                ${formData.relatedResearch.some(r => r.id === result.id)
+                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                }`}
+                            >
+                              {formData.relatedResearch.some(r => r.id === result.id) ? 'Added' : 'Add'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="mt-2 text-xs text-gray-500 text-center">
+                        <Link href="/research" className="text-blue-600 hover:underline inline-flex items-center">
+                          <BookOpen className="h-3 w-3 mr-1" />
+                          View more results in Research
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Display selected research papers */}
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                  {formData.relatedResearch.length > 0 ? 'Selected Papers' : ''}
+                </h4>
+                
+                {formData.relatedResearch.length > 0 ? (
+                  <div className="space-y-2">
+                    {formData.relatedResearch.map((paper) => (
+                      <div key={paper.id} className="border border-gray-200 rounded-lg p-3 flex justify-between items-center bg-white">
+                        <div className="flex items-start">
+                          <BookOpen className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900">{paper.title}</h4>
+                            <Link 
+                              href={`/research/article/${paper.id}`}
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              View paper
+                            </Link>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveResearch(paper.id)}
+                          className="ml-2 flex-shrink-0 text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition duration-150"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : !showResearchSearch && (
+                  <div className="text-center py-6 bg-gray-50 rounded-lg border border-gray-200 border-dashed">
+                    <Book className="mx-auto h-8 w-8 text-gray-300" />
+                    <p className="mt-1 text-sm text-gray-500">
+                      No research papers linked yet
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowResearchSearch(true)}
+                      className="mt-3 inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition duration-150"
+                    >
+                      <Search className="mr-1.5 h-3 w-3" />
+                      Find Papers
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Action Buttons */}
+                          <div className="pt-5 mt-6 border-t border-gray-200 flex flex-wrap justify-end gap-3">
               <Link
                 href="/projects"
-                className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-3"
+                className="px-4 py-2 rounded-lg border border-gray-300 shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="px-4 py-2 rounded-lg border border-transparent shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
               >
                 Create Project
               </button>

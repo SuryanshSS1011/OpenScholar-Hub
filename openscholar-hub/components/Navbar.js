@@ -11,9 +11,11 @@ import {
   BookOpen, 
   Home, 
   Search, 
-  BookMarked, 
+  FileText, 
   AlertCircle,
-  ChevronDown
+  ChevronDown,
+  Settings,
+  UserCircle
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -41,6 +43,20 @@ const Navbar = () => {
     // Clean up
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isProfileMenuOpen && !event.target.closest('.profile-menu')) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileMenuOpen]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -82,7 +98,7 @@ const Navbar = () => {
 
   // Determine active link styles
   const getLinkStyles = (path) => {
-    const isActive = router.pathname === path;
+    const isActive = router.pathname === path || router.pathname.startsWith(`${path}/`);
     return {
       desktop: `px-3 py-2 rounded-md text-sm font-medium transition ${
         isActive 
@@ -97,11 +113,11 @@ const Navbar = () => {
     };
   };
 
-  // Navigation items shared between desktop and mobile
+  // Navigation items shared between desktop and mobile (without About)
   const navItems = [
     { path: '/', label: 'Home', icon: <Home size={18} className="mr-1.5" /> },
     { path: '/projects', label: 'Projects', icon: <BookOpen size={18} className="mr-1.5" /> },
-    { path: '/resources', label: 'Resources', icon: <BookMarked size={18} className="mr-1.5" /> }
+    { path: '/research', label: 'Research', icon: <FileText size={18} className="mr-1.5" /> }
   ];
 
   // Main navbar classes based on scroll state
@@ -169,7 +185,7 @@ const Navbar = () => {
             
             {/* Auth Section */}
             {user ? (
-              <div className="relative ml-3">
+              <div className="relative ml-3 profile-menu">
                 {/* User Profile Button */}
                 <button
                   onClick={toggleProfileMenu}
@@ -199,7 +215,7 @@ const Navbar = () => {
                 
                 {/* Profile Dropdown */}
                 {isProfileMenuOpen && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                  <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 profile-menu">
                     <div 
                       className="py-1"
                       role="menu" 
@@ -217,25 +233,28 @@ const Navbar = () => {
                       
                       <Link 
                         href="/dashboard" 
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                         onClick={closeProfileMenu}
                       >
+                        <Home size={16} className="mr-2 text-gray-500" />
                         Dashboard
                       </Link>
                       
                       <Link 
                         href="/profile" 
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                         onClick={closeProfileMenu}
                       >
+                        <UserCircle size={16} className="mr-2 text-gray-500" />
                         Your Profile
                       </Link>
                       
                       <Link 
                         href="/settings" 
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center"
                         onClick={closeProfileMenu}
                       >
+                        <Settings size={16} className="mr-2 text-gray-500" />
                         Settings
                       </Link>
                       
@@ -244,7 +263,7 @@ const Navbar = () => {
                       <button
                         onClick={handleLogout}
                         disabled={isLoading}
-                        className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                       >
                         {isLoading ? (
                           <span className="flex items-center">
@@ -383,16 +402,18 @@ const Navbar = () => {
                 <div className="space-y-1">
                   <Link
                     href="/profile"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 flex items-center"
                     onClick={closeMenu}
                   >
+                    <UserCircle size={18} className="mr-1.5" />
                     Your Profile
                   </Link>
                   <Link
                     href="/settings"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 flex items-center"
                     onClick={closeMenu}
                   >
+                    <Settings size={18} className="mr-1.5" />
                     Settings
                   </Link>
                   <button
@@ -434,14 +455,6 @@ const Navbar = () => {
         <div 
           className="fixed inset-0 bg-black bg-opacity-25 md:hidden z-40"
           onClick={closeMenu}
-        ></div>
-      )}
-      
-      {/* Backdrop for profile dropdown */}
-      {isProfileMenuOpen && (
-        <div 
-          className="fixed inset-0 z-40"
-          onClick={closeProfileMenu}
         ></div>
       )}
     </nav>
