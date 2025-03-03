@@ -28,32 +28,44 @@ export default async function handler(req, res) {
       return res.status(500).json({ message: 'Server configuration error' });
     }
 
-    // Construct the Serply API request for related papers
-    const serplyUrl = 'https://api.serply.io/v1/scholar/related';
+    // Log API key presence for debugging
+    console.log('API Key present:', !!serplyApiKey);
+
+    // Build the related papers URL
+    const serplyUrl = `https://api.serply.io/v1/scholar/related/id=${paperId}&num=${limit}`;
     
+    console.log('Requesting URL:', serplyUrl);
+
+    // Make the API request to Serply
     const serplyResponse = await fetch(serplyUrl, {
-      method: 'POST',
+      method: 'GET', // Changed from POST to GET
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': serplyApiKey,
-        'X-Proxy-Location': 'US', // Can be configured based on user location
-      },
-      body: JSON.stringify({
-        paperId: paperId,
-        num: limit,
-      }),
+        'X-Api-Key': serplyApiKey
+      }
     });
 
+    // Log the response status for debugging
+    console.log('Serply API Response Status:', serplyResponse.status);
+
     if (!serplyResponse.ok) {
-      const errorData = await serplyResponse.json();
-      console.error('Serply API error:', errorData);
+      let errorMessage = 'Error from Scholar API';
+      
+      try {
+        const errorData = await serplyResponse.json();
+        console.error('Serply API error:', errorData);
+        errorMessage = errorData.message || errorMessage;
+      } catch (parseError) {
+        console.error('Error parsing error response:', parseError);
+      }
+      
       return res.status(serplyResponse.status).json({ 
-        message: 'Error from Google Scholar API',
-        error: errorData
+        message: errorMessage
       });
     }
 
     const data = await serplyResponse.json();
+    console.log('Serply API data received:', Object.keys(data));
     
     // Process and format the response data
     const formattedResults = {
