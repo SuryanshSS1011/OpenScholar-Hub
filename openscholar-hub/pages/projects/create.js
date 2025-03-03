@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { withAuth } from '@/middleware/authMiddleware';
-import Layout from '@/pages/components/Layout';
+import Layout from '@/components/Layout';
 import { useAuth } from '@/context/AuthContext';
 import { 
   Plus, 
