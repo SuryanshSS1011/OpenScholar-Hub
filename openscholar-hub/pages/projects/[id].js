@@ -10,7 +10,6 @@ import DiscordChat from '@/components/DiscordChat';
 import ProjectResearch from '@/components/ProjectResearch';
 import { ArrowLeft, Users, Calendar, ChevronRight, Globe, Lock, BookOpen, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import Image from 'next/image';
 
 const ProjectDetailPage = () => {
   const router = useRouter();
@@ -236,7 +235,13 @@ const ProjectDetailPage = () => {
                     className="h-8 w-8 rounded-full border-2 border-white bg-gray-200 overflow-hidden"
                   >
                     {collaborator.avatar ? (
-                      <Image src={collaborator.avatar} alt={collaborator.name} className="h-full w-full object-cover" />
+                      <img 
+                        src={collaborator.avatar} 
+                        alt={collaborator.name} 
+                        className="h-full w-full object-cover" 
+                        width={32} 
+                        height={32}
+                      />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white font-medium">
                         {collaborator.name.charAt(0)}
@@ -300,7 +305,13 @@ const ProjectDetailPage = () => {
                         <div className="flex items-center">
                           <div className="h-8 w-8 rounded-full mr-3 bg-gray-200 overflow-hidden">
                             {collaborator.avatar ? (
-                              <Image src={collaborator.avatar} alt={collaborator.name} className="h-full w-full object-cover" />
+                              <img 
+                                src={collaborator.avatar} 
+                                alt={collaborator.name} 
+                                className="h-full w-full object-cover"
+                                width={32}
+                                height={32}
+                              />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center bg-blue-500 text-white font-medium">
                                 {collaborator.name.charAt(0)}
@@ -368,15 +379,23 @@ const ProjectDetailPage = () => {
                     Collaborate in real-time with your team via Discord
                   </p>
                 </div>
-                {!discordSetup && (
-                  <button
-                    onClick={handleSetupDiscord}
-                    disabled={setupLoading}
-                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                <div className="flex space-x-3">
+                  <Link
+                    href={`/projects/${id}/chat`}
+                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
-                    {setupLoading ? 'Setting up...' : 'Set up Discord Chat'}
-                  </button>
-                )}
+                    Open Full Chat
+                  </Link>
+                  {!discordSetup && (
+                    <button
+                      onClick={handleSetupDiscord}
+                      disabled={setupLoading}
+                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    >
+                      {setupLoading ? 'Setting up...' : 'Set up Discord Chat'}
+                    </button>
+                  )}
+                </div>
               </div>
               
               <div className="px-4 py-5 sm:p-6">
