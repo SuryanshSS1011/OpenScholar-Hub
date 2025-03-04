@@ -8,9 +8,12 @@ import {
   List, 
   ListOrdered, 
   Code, 
-  Link,
+  Link as LinkIcon,
   Smile,
-  X
+  X,
+  AlertCircle,
+  Image,
+  Upload
 } from 'lucide-react';
 
 /**
@@ -21,11 +24,12 @@ const MessageInput = ({ channelId, dmId, threadTs, onSend }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
   const messageInputRef = useRef(null);
   
   // Function to handle message submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!message.trim() && uploadedFiles.length === 0) return;
@@ -33,23 +37,61 @@ const MessageInput = ({ channelId, dmId, threadTs, onSend }) => {
     // Use the conversation ID based on whether it's a channel or DM
     const conversationId = channelId || dmId;
     
-    // In a real implementation, this would call your API
+    if (!conversationId) return;
+    
     console.log('Sending message to', conversationId, {
       text: message,
       threadTs,
       files: uploadedFiles,
     });
     
-    // Clear input and files after sending
-    setMessage('');
-    setUploadedFiles([]);
+    setIsUploading(true);
+    setError(null);
     
-    // Call onSend callback if provided
-    if (onSend) {
-      onSend({
-        text: message,
-        files: uploadedFiles,
+    try {
+      // Create form data for multipart/form-data request (for file uploads)
+      const formData = new FormData();
+      formData.append('channelId', conversationId);
+      
+      if (message.trim()) {
+        formData.append('text', message);
+      }
+      
+      if (threadTs) {
+        formData.append('threadTs', threadTs);
+      }
+      
+      // Add files if any
+      uploadedFiles.forEach((fileObj, index) => {
+        formData.append(`file${index}`, fileObj.file);
       });
+      
+      // Send the message
+      const response = await fetch('/api/slack/messages', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to send message: ${response.status}`);
+      }
+      
+      const sentMessage = await response.json();
+      
+      // Clear input and files after sending
+      setMessage('');
+      setUploadedFiles([]);
+      
+      // Call onSend callback if provided
+      if (onSend) {
+        onSend(sentMessage);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setError(error.message || 'Failed to send message. Please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
   
@@ -59,28 +101,39 @@ const MessageInput = ({ channelId, dmId, threadTs, onSend }) => {
     
     if (files.length === 0) return;
     
-    // In a real implementation, you would upload these files
-    // For demo, just store the file info
-    setIsUploading(true);
+    // Check file size limits (10MB per file in this example)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    const MAX_FILES = 10;
     
-    // Simulate file upload delay
-    setTimeout(() => {
-      const newFiles = files.map(file => ({
-        id: Math.random().toString(36).substring(2),
-        name: file.name,
-        size: `${(file.size / 1024).toFixed(1)} KB`,
-        type: file.type,
-        url: URL.createObjectURL(file),
-      }));
-      
-      setUploadedFiles(prev => [...prev, ...newFiles]);
-      setIsUploading(false);
-      
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+    // Check if adding these files would exceed the max files limit
+    if (uploadedFiles.length + files.length > MAX_FILES) {
+      setError(`You can only upload up to ${MAX_FILES} files at once.`);
+      return;
+    }
+    
+    // Add valid files to state
+    const newFiles = files.filter(file => {
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`File "${file.name}" exceeds the maximum size of 10MB.`);
+        return false;
       }
-    }, 1500);
+      return true;
+    }).map(file => ({
+      id: Math.random().toString(36).substring(2),
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file, // Store the actual file object for uploading
+    }));
+    
+    if (newFiles.length > 0) {
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
   
   // Function to remove an uploaded file
@@ -146,6 +199,26 @@ const MessageInput = ({ channelId, dmId, threadTs, onSend }) => {
     }, 0);
   };
   
+  // Format file size for display
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    } else if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    } else {
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+  };
+  
+  // Get file icon based on type
+  const getFileIcon = (fileType) => {
+    if (fileType.startsWith('image/')) {
+      return <Image className="h-4 w-4 text-blue-500" />;
+    } else {
+      return <Paperclip className="h-4 w-4 text-gray-500" />;
+    }
+  };
+  
   // Focus input on mount
   useEffect(() => {
     messageInputRef.current?.focus();
@@ -153,6 +226,20 @@ const MessageInput = ({ channelId, dmId, threadTs, onSend }) => {
   
   return (
     <div className="border-t border-gray-200 px-4 py-3 bg-white">
+      {/* Error display */}
+      {error && (
+        <div className="mb-3 p-2 bg-red-50 text-red-700 text-sm rounded-md flex items-center">
+          <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+          <span className="flex-grow">{error}</span>
+          <button 
+            onClick={() => setError(null)}
+            className="ml-2 text-red-500 hover:text-red-700"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+      
       {/* Uploaded files preview */}
       {uploadedFiles.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-2">
@@ -161,7 +248,10 @@ const MessageInput = ({ channelId, dmId, threadTs, onSend }) => {
               key={file.id}
               className="flex items-center bg-gray-100 rounded-full pl-3 pr-1 py-1"
             >
-              <span className="text-xs text-gray-800 truncate max-w-[150px]">{file.name}</span>
+              {getFileIcon(file.type)}
+              <span className="ml-1 text-xs text-gray-800 truncate max-w-[150px]">
+                {file.name} ({formatFileSize(file.size)})
+              </span>
               <button 
                 onClick={() => removeFile(file.id)}
                 className="ml-1 p-1 text-gray-500 hover:text-gray-700 rounded-full"
@@ -207,7 +297,7 @@ const MessageInput = ({ channelId, dmId, threadTs, onSend }) => {
             className="p-1 text-gray-500 hover:text-gray-700 rounded hover:bg-gray-100"
             title="Link"
           >
-            <Link className="h-4 w-4" />
+            <LinkIcon className="h-4 w-4" />
           </button>
           <button 
             type="button"
@@ -302,10 +392,14 @@ const MessageInput = ({ channelId, dmId, threadTs, onSend }) => {
                   ? 'text-blue-600 hover:text-blue-800'
                   : 'text-gray-400 cursor-not-allowed'
               }`}
-              disabled={!message.trim() && uploadedFiles.length === 0}
+              disabled={(!message.trim() && uploadedFiles.length === 0) || isUploading}
               title="Send message"
             >
-              <Send className="h-5 w-5" />
+              {isUploading ? (
+                <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+              ) : (
+                <Send className="h-5 w-5" />
+              )}
             </button>
           </div>
         </div>

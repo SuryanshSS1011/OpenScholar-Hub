@@ -1,3 +1,4 @@
+// @/components/Navbar.js - Updated with Chat Integration
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -15,7 +16,8 @@ import {
   AlertCircle,
   ChevronDown,
   Settings,
-  UserCircle
+  UserCircle,
+  MessageCircle
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -27,6 +29,7 @@ const Navbar = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   // Handle scroll effects
   useEffect(() => {
@@ -43,6 +46,22 @@ const Navbar = () => {
     // Clean up
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Check for unread messages
+  useEffect(() => {
+    if (user) {
+      // In a real implementation, we would fetch unread count from API
+      // For demo, just set a random number occasionally
+      const interval = setInterval(() => {
+        // Simulate getting new messages 30% of the time
+        if (Math.random() > 0.7) {
+          setUnreadMessages(prev => prev + 1);
+        }
+      }, 60000); // Check every minute
+      
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -113,11 +132,17 @@ const Navbar = () => {
     };
   };
 
-  // Navigation items shared between desktop and mobile (without About)
+  // Navigation items with Chat added
   const navItems = [
     { path: '/', label: 'Home', icon: <Home size={18} className="mr-1.5" /> },
     { path: '/projects', label: 'Projects', icon: <BookOpen size={18} className="mr-1.5" /> },
-    { path: '/research', label: 'Research', icon: <FileText size={18} className="mr-1.5" /> }
+    { path: '/research', label: 'Research', icon: <FileText size={18} className="mr-1.5" /> },
+    { 
+      path: '/chat', 
+      label: 'Chat', 
+      icon: <MessageCircle size={18} className="mr-1.5" />,
+      badge: unreadMessages > 0 ? unreadMessages : null 
+    }
   ];
 
   // Main navbar classes based on scroll state
@@ -167,6 +192,11 @@ const Navbar = () => {
                 <span className="flex items-center">
                   {item.icon}
                   {item.label}
+                  {item.badge && (
+                    <span className="ml-1.5 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
                 </span>
               </Link>
             ))}
@@ -333,6 +363,11 @@ const Navbar = () => {
               <span className="flex items-center">
                 {item.icon}
                 {item.label}
+                {item.badge && (
+                  <span className="ml-1.5 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {item.badge}
+                  </span>
+                )}
               </span>
             </Link>
           ))}

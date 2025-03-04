@@ -1,54 +1,9 @@
-// @/utils/slackApi.js
-/**
- * Utility functions for interacting with the Slack API
- */
+// @/utils/slackApi.js - Enhanced implementation
 
-/**
- * Base function to make authenticated requests to the Slack API
- * @param {string} endpoint - The API endpoint to call
- * @param {object} options - Request options
- * @returns {Promise<object>} - The API response
- */
-const callSlackApi = async (endpoint, options = {}) => {
-  const defaultOptions = {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
-    },
-  };
+import { WebClient } from '@slack/web-api';
 
-  const mergedOptions = {
-    ...defaultOptions,
-    ...options,
-    headers: {
-      ...defaultOptions.headers,
-      ...options.headers,
-    },
-  };
-
-  try {
-    const apiUrl = `https://slack.com/api/${endpoint}`;
-    const response = await fetch(apiUrl, mergedOptions);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `API request failed with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    // Slack API returns ok: false when there's an error
-    if (!data.ok) {
-      throw new Error(data.error || 'Unknown Slack API error');
-    }
-    
-    return data;
-  } catch (error) {
-    console.error(`Error calling Slack API (${endpoint}):`, error);
-    throw error;
-  }
-};
+// Initialize the WebClient with the bot token
+const slack = new WebClient(process.env.SLACK_BOT_TOKEN);
 
 /**
  * Get a list of channels in the workspace
@@ -57,18 +12,12 @@ const callSlackApi = async (endpoint, options = {}) => {
  */
 export const getChannels = async (excludeArchived = true) => {
   try {
-    const data = await callSlackApi('conversations.list', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        exclude_archived: excludeArchived,
-        types: 'public_channel,private_channel',
-      }),
+    const result = await slack.conversations.list({
+      exclude_archived: excludeArchived,
+      types: 'public_channel,private_channel',
     });
     
-    return data.channels || [];
+    return result.channels || [];
   } catch (error) {
     console.error('Error fetching channels:', error);
     throw error;
@@ -85,24 +34,18 @@ export const getChannels = async (excludeArchived = true) => {
 export const createChannel = async (name, isPrivate = false, userIds = []) => {
   try {
     // Create the channel
-    const channelData = await callSlackApi('conversations.create', {
-      method: 'POST',
-      body: JSON.stringify({
-        name: name.toLowerCase().replace(/[^a-z0-9_-]/g, '-'),
-        is_private: isPrivate,
-      }),
+    const channelData = await slack.conversations.create({
+      name: name.toLowerCase().replace(/[^a-z0-9_-]/g, '-'),
+      is_private: isPrivate,
     });
     
     const channelId = channelData.channel.id;
     
     // Invite users if provided
     if (userIds.length > 0) {
-      await callSlackApi('conversations.invite', {
-        method: 'POST',
-        body: JSON.stringify({
-          channel: channelId,
-          users: userIds.join(','),
-        }),
+      await slack.conversations.invite({
+        channel: channelId,
+        users: userIds.join(','),
       });
     }
     
@@ -131,13 +74,7 @@ export const getMessages = async (channelId, cursor = null, limit = 50) => {
       params.cursor = cursor;
     }
     
-    const data = await callSlackApi('conversations.history', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams(params),
-    });
+    const data = await slack.conversations.history(params);
     
     return {
       messages: data.messages || [],
@@ -166,19 +103,16 @@ export const sendMessage = async (channelId, text, blocks = undefined, threadTs 
     };
     
     if (blocks) {
-      params.blocks = JSON.stringify(blocks);
+      params.blocks = blocks;
     }
     
     if (threadTs) {
       params.thread_ts = threadTs;
     }
     
-    const data = await callSlackApi('chat.postMessage', {
-      method: 'POST',
-      body: JSON.stringify(params),
-    });
+    const result = await slack.chat.postMessage(params);
     
-    return data.message;
+    return result.message;
   } catch (error) {
     console.error('Error sending message:', error);
     throw error;
@@ -191,8 +125,8 @@ export const sendMessage = async (channelId, text, blocks = undefined, threadTs 
  */
 export const getUsers = async () => {
   try {
-    const data = await callSlackApi('users.list');
-    return data.members || [];
+    const result = await slack.users.list();
+    return result.members || [];
   } catch (error) {
     console.error('Error fetching users:', error);
     throw error;
@@ -206,14 +140,11 @@ export const getUsers = async () => {
  */
 export const createDM = async (userId) => {
   try {
-    const data = await callSlackApi('conversations.open', {
-      method: 'POST',
-      body: JSON.stringify({
-        users: userId,
-      }),
+    const result = await slack.conversations.open({
+      users: userId,
     });
     
-    return data.channel.id;
+    return result.channel.id;
   } catch (error) {
     console.error('Error creating DM:', error);
     throw error;
@@ -223,93 +154,31 @@ export const createDM = async (userId) => {
 /**
  * Upload a file to a channel or DM
  * @param {string} channelId - The channel or DM ID
- * @param {File} file - The file to upload
+ * @param {Buffer|ReadStream} file - The file to upload
  * @param {string} title - File title
  * @param {string} threadTs - Parent message timestamp (for replies)
  * @returns {Promise<object>} - The uploaded file info
  */
 export const uploadFile = async (channelId, file, title = '', threadTs = undefined) => {
   try {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('channels', channelId);
+    const params = {
+      channels: channelId,
+      file,
+    };
     
     if (title) {
-      formData.append('title', title);
+      params.title = title;
     }
     
     if (threadTs) {
-      formData.append('thread_ts', threadTs);
+      params.thread_ts = threadTs;
     }
     
-    const data = await callSlackApi('files.upload', {
-      method: 'POST',
-      headers: {
-        // Don't set Content-Type here, let the browser set it with the boundary
-        Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
-      },
-      body: formData,
-    });
+    const result = await slack.files.upload(params);
     
-    return data.file;
+    return result.file;
   } catch (error) {
     console.error('Error uploading file:', error);
-    throw error;
-  }
-};
-
-/**
- * Add a reaction to a message
- * @param {string} channelId - The channel ID
- * @param {string} timestamp - Message timestamp
- * @param {string} emoji - Emoji name without colons
- * @returns {Promise<object>} - The API response
- */
-export const addReaction = async (channelId, timestamp, emoji) => {
-  try {
-    const data = await callSlackApi('reactions.add', {
-      method: 'POST',
-      body: JSON.stringify({
-        channel: channelId,
-        timestamp,
-        name: emoji,
-      }),
-    });
-    
-    return data;
-  } catch (error) {
-    console.error('Error adding reaction:', error);
-    throw error;
-  }
-};
-
-/**
- * Search messages across the workspace
- * @param {string} query - Search query
- * @param {number} count - Number of results to return
- * @param {number} page - Page number
- * @returns {Promise<object>} - Search results
- */
-export const searchMessages = async (query, count = 20, page = 1) => {
-  try {
-    const data = await callSlackApi('search.messages', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        query,
-        count,
-        page,
-      }),
-    });
-    
-    return {
-      messages: data.messages.matches || [],
-      pagination: data.messages.pagination,
-    };
-  } catch (error) {
-    console.error('Error searching messages:', error);
     throw error;
   }
 };
