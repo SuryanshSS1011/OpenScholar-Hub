@@ -1,4 +1,3 @@
-// @/context/ChatContext.js
 import { createContext, useContext, useState, useEffect, useCallback, useReducer, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import io from 'socket.io-client';
@@ -235,6 +234,75 @@ export function ChatProvider({ children }) {
     const socketRef = useRef(null);
     const activeChannelRef = useRef(null);
 
+    // Define callback functions first to avoid reference errors
+    
+    // Handle reaction added event
+    const handleReactionAdded = useCallback((reaction) => {
+        dispatch({
+            type: ACTIONS.ADD_REACTION,
+            payload: {
+                messageId: reaction.messageId,
+                name: reaction.name,
+                user: reaction.user,
+            },
+        });
+    }, []);
+
+    // Handle reaction removed event
+    const handleReactionRemoved = useCallback((reaction) => {
+        dispatch({
+            type: ACTIONS.REMOVE_REACTION,
+            payload: {
+                messageId: reaction.messageId,
+                name: reaction.name,
+                user: reaction.user,
+            },
+        });
+    }, []);
+
+    // Handle incoming message
+    const handleNewMessage = useCallback((message) => {
+        const channelId = message.channel;
+        const currentId = state.currentChannel?.id || state.currentDM?.id;
+
+        // Add message to the current conversation if it matches
+        if (channelId === currentId) {
+            dispatch({
+                type: ACTIONS.ADD_MESSAGE,
+                payload: message,
+            });
+        } else {
+            // Otherwise increment unread count
+            dispatch({
+                type: ACTIONS.UPDATE_UNREAD_COUNTS,
+                payload: { id: channelId },
+            });
+        }
+    }, [state.currentChannel, state.currentDM]);
+
+    // Fetch channels from API
+    const fetchChannels = useCallback(async () => {
+        if (!user) return;
+
+        dispatch({ type: ACTIONS.SET_LOADING, payload: true });
+
+        try {
+            const response = await fetch('/api/slack/channels');
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch channels');
+            }
+
+            const channels = await response.json();
+            dispatch({ type: ACTIONS.SET_CHANNELS, payload: channels });
+        } catch (error) {
+            console.error('Error fetching channels:', error);
+            dispatch({ type: ACTIONS.SET_ERROR, payload: error.message });
+        } finally {
+            dispatch({ type: ACTIONS.SET_LOADING, payload: false });
+        }
+    }, [user]);
+
     // Initialize Socket.io
     useEffect(() => {
         // Only initialize if user is logged in
@@ -251,7 +319,7 @@ export function ChatProvider({ children }) {
         };
     }, [user]);
 
-    // Handle Socket.io events
+    // Handle Socket.io events - now all callbacks are defined before use
     useEffect(() => {
         if (!socketRef.current) return;
 
@@ -287,29 +355,6 @@ export function ChatProvider({ children }) {
             socketRef.current.off('slack_event', handleSlackEvent);
         };
     }, [fetchChannels, handleNewMessage, handleReactionAdded, handleReactionRemoved]);
-
-    // Fetch channels from API
-    const fetchChannels = useCallback(async () => {
-        if (!user) return;
-
-        dispatch({ type: ACTIONS.SET_LOADING, payload: true });
-
-        try {
-            const response = await fetch('/api/slack/channels');
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch channels');
-            }
-
-            const channels = await response.json();
-            dispatch({ type: ACTIONS.SET_CHANNELS, payload: channels });
-        } catch (error) {
-            console.error('Error fetching channels:', error);
-            dispatch({ type: ACTIONS.SET_ERROR, payload: error.message });
-        } finally {
-            dispatch({ type: ACTIONS.SET_LOADING, payload: false });
-        }
-    }, [user]);
 
     // Fetch direct messages from API
     const fetchDirectMessages = useCallback(async () => {
@@ -527,50 +572,6 @@ export function ChatProvider({ children }) {
             fetchMessages(currentId, false);
         }
     }, [state.currentChannel, state.currentDM, fetchMessages]);
-
-    // Handle reaction added event
-    const handleReactionAdded = useCallback((reaction) => {
-        dispatch({
-            type: ACTIONS.ADD_REACTION,
-            payload: {
-                messageId: reaction.messageId,
-                name: reaction.name,
-                user: reaction.user,
-            },
-        });
-    }, []);
-
-    // Handle reaction removed event
-    const handleReactionRemoved = useCallback((reaction) => {
-        dispatch({
-            type: ACTIONS.REMOVE_REACTION,
-            payload: {
-                messageId: reaction.messageId,
-                name: reaction.name,
-                user: reaction.user,
-            },
-        });
-    }, []);
-
-    // Handle incoming message
-    const handleNewMessage = useCallback((message) => {
-        const channelId = message.channel;
-        const currentId = state.currentChannel?.id || state.currentDM?.id;
-
-        // Add message to the current conversation if it matches
-        if (channelId === currentId) {
-            dispatch({
-                type: ACTIONS.ADD_MESSAGE,
-                payload: message,
-            });
-        } else {
-            // Otherwise increment unread count
-            dispatch({
-                type: ACTIONS.UPDATE_UNREAD_COUNTS,
-                payload: { id: channelId },
-            });
-        }
-    }, [state.currentChannel, state.currentDM]);
 
     // Add a reaction to a message
     const addReaction = useCallback(async (channelId, messageId, emoji) => {

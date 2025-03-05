@@ -126,21 +126,31 @@ export default function Home() {
           <div className="max-w-2xl mx-auto text-center py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
               <span className="block">Ready to start collaborating?</span>
-              <span className="block">Join OpenScholar Hub today.</span>
+              {!user && <span className="block">Join OpenScholar Hub today.</span>}
             </h2>
             <p className="mt-4 text-lg leading-6 text-blue-200">
-              Sign up and connect with researchers worldwide. Share your work, collaborate on projects, and accelerate scientific discovery.
+              {user ? 
+                "Start a new project, search for research, or connect with collaborators." :
+                "Sign up and connect with researchers worldwide. Share your work, collaborate on projects, and accelerate scientific discovery."}
             </p>
             <div className="mt-8 flex justify-center">
               {loading ? (
                 <div className="animate-pulse h-12 w-40 bg-white/20 rounded-md"></div>
               ) : user ? (
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50"
-                >
-                  Go to Dashboard
-                </Link>
+                <div className="flex space-x-4">
+                  <Link
+                    href="/projects/create"
+                    className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50"
+                  >
+                    Start a Project
+                  </Link>
+                  <Link
+                    href="/research"
+                    className="inline-flex items-center justify-center px-5 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-blue-800"
+                  >
+                    Explore Research
+                  </Link>
+                </div>
               ) : (
                 <Link
                   href="/auth/signup"

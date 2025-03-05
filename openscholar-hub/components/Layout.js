@@ -1,4 +1,6 @@
+import React from 'react';
 import Navbar from './Navbar';
+import Link from 'next/link';
 
 const Layout = ({ children }) => {
   return (
@@ -15,18 +17,12 @@ const Layout = ({ children }) => {
               <p className="text-sm text-gray-300">Democratizing research collaboration</p>
             </div>
             <div className="flex space-x-6">
-              <a href="#" className="text-gray-300 hover:text-white">
+              <Link href="/about" className="text-gray-300 hover:text-white">
                 About
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white">
-                Privacy
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white">
-                Terms
-              </a>
-              <a href="#" className="text-gray-300 hover:text-white">
+              </Link>
+              <Link href="/contact" className="text-gray-300 hover:text-white">
                 Contact
-              </a>
+              </Link>
             </div>
           </div>
           <div className="mt-8 border-t border-gray-700 pt-4">
