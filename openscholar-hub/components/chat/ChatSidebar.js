@@ -1,5 +1,5 @@
-// @/components/chat/ChatSidebar.js
-import React, { useState } from 'react';
+// @/components/chat/ChatSidebar.js - Improved version
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { 
@@ -11,10 +11,9 @@ import {
   UserPlus, 
   User, 
   Settings,
-  MessageSquare
+  MessageCircle,
+  Search 
 } from 'lucide-react';
-import ChannelList from './ChannelList';
-import DirectMessageList from './DirectMessageList';
 
 /**
  * Sidebar component for chat navigation
@@ -27,31 +26,13 @@ const ChatSidebar = ({ activeChannelId, activeDmId }) => {
   const [showCreateChannel, setShowCreateChannel] = useState(false);
   const [newChannelName, setNewChannelName] = useState('');
   const [newChannelIsPrivate, setNewChannelIsPrivate] = useState(false);
+  const [isCreatingChannel, setIsCreatingChannel] = useState(false);
+  const [createChannelError, setCreateChannelError] = useState(null);
   
   const toggleChannels = () => setIsChannelsOpen(!isChannelsOpen);
   const toggleDms = () => setIsDmsOpen(!isDmsOpen);
   
-  const handleCreateChannel = (e) => {
-    e.preventDefault();
-    
-    if (!newChannelName.trim()) return;
-    
-    // In a real implementation, this would call an API
-    console.log('Creating channel:', {
-      name: newChannelName,
-      isPrivate: newChannelIsPrivate,
-    });
-    
-    // Reset form and close dialog
-    setNewChannelName('');
-    setNewChannelIsPrivate(false);
-    setShowCreateChannel(false);
-    
-    // Navigate to the new channel (mock ID for demo)
-    router.push(`/chat/new-channel-id`);
-  };
-  
-  // Mock data for demonstration
+  // Mock channels for demo
   const channels = [
     { id: 'C0123', name: 'general', isPrivate: false, unreadCount: 0 },
     { id: 'C0124', name: 'research-collaboration', isPrivate: false, unreadCount: 3 },
@@ -59,18 +40,58 @@ const ChatSidebar = ({ activeChannelId, activeDmId }) => {
     { id: 'C0126', name: 'random', isPrivate: false, unreadCount: 0 },
   ];
   
+  // Mock direct messages for demo
   const directMessages = [
     { id: 'D0123', name: 'Jane Smith', status: 'active', unreadCount: 2 },
     { id: 'D0124', name: 'Robert Johnson', status: 'away', unreadCount: 0 },
     { id: 'D0125', name: 'Emma Williams', status: 'active', unreadCount: 0 },
   ];
   
+  const handleCreateChannel = async (e) => {
+    e.preventDefault();
+    
+    if (!newChannelName.trim()) {
+      setCreateChannelError("Channel name is required");
+      return;
+    }
+    
+    setIsCreatingChannel(true);
+    setCreateChannelError(null);
+    
+    try {
+      console.log('Creating channel:', {
+        name: newChannelName,
+        isPrivate: newChannelIsPrivate,
+      });
+      
+      // In a real implementation, this would call your API
+      // For demo, simulate API call with timeout
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Generate a mock channel ID
+      const newChannelId = 'C' + Math.random().toString(36).substring(2, 10);
+      
+      // Reset form and close dialog
+      setNewChannelName('');
+      setNewChannelIsPrivate(false);
+      setShowCreateChannel(false);
+      
+      // Navigate to the new channel
+      router.push(`/chat/${newChannelId}`);
+    } catch (error) {
+      console.error('Error creating channel:', error);
+      setCreateChannelError(error.message || "Failed to create channel");
+    } finally {
+      setIsCreatingChannel(false);
+    }
+  };
+  
   return (
     <div className="w-60 bg-gray-800 text-white flex flex-col h-full">
       {/* Workspace Header */}
       <div className="p-3 border-b border-gray-700">
         <h2 className="text-lg font-semibold flex items-center">
-          <MessageSquare className="mr-2 h-5 w-5" />
+          <MessageCircle className="mr-2 h-5 w-5" />
           OpenScholar Chat
         </h2>
       </div>
@@ -226,13 +247,13 @@ const ChatSidebar = ({ activeChannelId, activeDmId }) => {
       {/* Create Channel Modal */}
       {showCreateChannel && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md text-gray-800">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Create a channel</h3>
             
             <form onSubmit={handleCreateChannel}>
               <div className="mb-4">
                 <label htmlFor="channel-name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Channel name
+                  Channel name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -241,10 +262,14 @@ const ChatSidebar = ({ activeChannelId, activeDmId }) => {
                   onChange={(e) => setNewChannelName(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="e.g. project-research"
+                  autoComplete="off"
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   Use lowercase letters, numbers, and hyphens. No spaces.
                 </p>
+                {createChannelError && (
+                  <p className="mt-1 text-xs text-red-500">{createChannelError}</p>
+                )}
               </div>
               
               <div className="mb-6">
@@ -268,17 +293,22 @@ const ChatSidebar = ({ activeChannelId, activeDmId }) => {
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
-                  onClick={() => setShowCreateChannel(false)}
+                  onClick={() => {
+                    setShowCreateChannel(false);
+                    setNewChannelName('');
+                    setNewChannelIsPrivate(false);
+                    setCreateChannelError(null);
+                  }}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  disabled={!newChannelName.trim()}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isCreatingChannel || !newChannelName.trim()}
                 >
-                  Create
+                  {isCreatingChannel ? 'Creating...' : 'Create'}
                 </button>
               </div>
             </form>
