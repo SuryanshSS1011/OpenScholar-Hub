@@ -1,5 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // Enhanced error checking for Firebase configuration
 const requiredEnvVars = [
@@ -30,12 +32,16 @@ const firebaseConfig = {
 
 let app;
 let auth;
+let db;
+let storage;
 let googleProvider;
 
 try {
   // Initialize Firebase
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
   
   // Initialize Google provider with additional scopes for better user information
   googleProvider = new GoogleAuthProvider();
@@ -52,4 +58,4 @@ try {
   console.error('Firebase initialization error:', error);
 }
 
-export { auth, googleProvider };
+export { auth, db, storage, googleProvider };

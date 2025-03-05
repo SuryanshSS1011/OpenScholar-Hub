@@ -184,11 +184,9 @@ const Profile = () => {
               <h3 className="text-lg font-medium text-gray-900 mb-3">Research Tools</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/research">
-                    <a className="text-blue-600 hover:underline flex items-center">
+                  <Link href="/research" className="text-blue-600 hover:underline flex items-center">
                       <BookOpen className="h-4 w-4 mr-2" />
                       Search Academic Literature
-                    </a>
                   </Link>
                 </li>
                 <li>

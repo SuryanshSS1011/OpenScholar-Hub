@@ -1,130 +1,110 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import Layout from '../components/Layout';
 import { Search, Filter, BookOpen, Users, Calendar, ArrowUpRight } from 'lucide-react';
+import { getProjects } from '@/services/projectService';
 
 const ProjectsPage = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [projects, setProjects] = useState([]);
-  const [filteredProjects, setFilteredProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all'); // all, featured, recent, popular
+  const [lastVisible, setLastVisible] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  useEffect(() => {
-    // Simulated fetch of project data
-    const fetchProjects = async () => {
-      try {
-        // This would be replaced with an API call in production
-        setTimeout(() => {
-          setProjects([
-            {
-              id: '1',
-              title: 'Climate Change Impact on Ocean Ecosystems',
-              description: 'Comprehensive study of global warming effects on marine biodiversity and ecosystem stability.',
-              category: 'Environmental Science',
-              members: 12,
-              status: 'active',
-              featured: true,
-              lastUpdated: '2025-02-18',
-              tags: ['climate', 'marine', 'biodiversity'],
-            },
-            {
-              id: '2',
-              title: 'Neural Networks for Medical Diagnosis',
-              description: 'Developing advanced neural network models to improve early detection of diseases from medical imaging.',
-              category: 'Computer Science',
-              members: 8,
-              status: 'active',
-              featured: true,
-              lastUpdated: '2025-02-20',
-              tags: ['ai', 'healthcare', 'neural-networks'],
-            },
-            {
-              id: '3',
-              title: 'Sustainable Urban Planning Models',
-              description: 'Research on integrating renewable energy and green infrastructure in urban development.',
-              category: 'Urban Planning',
-              members: 15,
-              status: 'active',
-              featured: false,
-              lastUpdated: '2025-01-25',
-              tags: ['sustainability', 'urban', 'renewable'],
-            },
-            {
-              id: '4',
-              title: 'Blockchain for Academic Publishing',
-              description: 'Exploring blockchain technology to improve transparency and credit in academic publishing.',
-              category: 'Information Science',
-              members: 6,
-              status: 'planning',
-              featured: false,
-              lastUpdated: '2025-02-12',
-              tags: ['blockchain', 'publishing', 'academia'],
-            },
-            {
-              id: '5',
-              title: 'Quantum Computing Applications in Cryptography',
-              description: 'Research on implications of quantum computing for current cryptographic methods and development of quantum-resistant algorithms.',
-              category: 'Computer Science',
-              members: 9,
-              status: 'active',
-              featured: true,
-              lastUpdated: '2025-02-22',
-              tags: ['quantum', 'cryptography', 'security'],
-            },
-            {
-              id: '6',
-              title: 'Vaccine Development for Emerging Diseases',
-              description: 'Collaborative research on methods to accelerate vaccine development for new and emerging infectious diseases.',
-              category: 'Biology',
-              members: 24,
-              status: 'active',
-              featured: false,
-              lastUpdated: '2025-01-30',
-              tags: ['vaccines', 'infectious-disease', 'public-health'],
-            },
-          ]);
-          setLoading(false);
-        }, 1000);
-      } catch (error) {
-        console.error('Error fetching projects:', error);
-        setLoading(false);
+  // Function to fetch projects
+  const fetchProjects = useCallback(async (loadMore = false) => {
+    try {
+      if (loadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
       }
-    };
+      
+      // Define filter options based on selected filter
+      const options = {
+        sortBy: filter === 'recent' ? 'recent' : 
+               filter === 'popular' ? 'popular' : 'recent',
+        featured: filter === 'featured',
+        searchTerm: searchTerm,
+        lastVisible: loadMore ? lastVisible : null,
+        pageSize: 12
+      };
+      
+      // Call the service function
+      const result = await getProjects(options);
+      
+      if (loadMore) {
+        // Append projects to existing list
+        setProjects(prev => [...prev, ...result.projects]);
+      } else {
+        // Replace projects with new results
+        setProjects(result.projects);
+      }
+      
+      // Update pagination state
+      setLastVisible(result.lastVisible);
+      setHasMore(result.hasMore);
+      
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+      setError('Failed to load projects. Please try again.');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [filter, searchTerm, lastVisible]);
 
-    fetchProjects();
-  }, []);
-
-  // Filter and search projects
+  // Initial data fetching
   useEffect(() => {
-    let result = [...projects];
-    
-    // Apply category filter
-    if (filter === 'featured') {
-      result = result.filter(project => project.featured);
-    } else if (filter === 'recent') {
-      result = result.sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated));
-    } else if (filter === 'popular') {
-      result = result.sort((a, b) => b.members - a.members);
+    fetchProjects();
+  }, [fetchProjects]);
+  
+  // Reset search when filter changes
+  useEffect(() => {
+    setSearchTerm('');
+  }, [filter]);
+
+  // Handle load more
+  const handleLoadMore = () => {
+    if (hasMore && !loadingMore) {
+      fetchProjects(true);
     }
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Unknown date';
     
-    // Apply search term
-    if (searchTerm) {
-      const lowerSearchTerm = searchTerm.toLowerCase();
-      result = result.filter(
-        project =>
-          project.title.toLowerCase().includes(lowerSearchTerm) ||
-          project.description.toLowerCase().includes(lowerSearchTerm) ||
-          project.category.toLowerCase().includes(lowerSearchTerm) ||
-          project.tags.some(tag => tag.includes(lowerSearchTerm))
-      );
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }).format(date);
+  };
+
+  // Determine status color class
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active':
+      case 'In Progress':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'planning':
+      case 'Planning':
+        return 'bg-blue-100 text-blue-800';
+      case 'completed':
+      case 'Completed':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
-    
-    setFilteredProjects(result);
-  }, [projects, searchTerm, filter]);
+  };
 
   return (
     <Layout>
@@ -165,6 +145,7 @@ const ProjectsPage = () => {
               placeholder="Search projects..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && fetchProjects()}
             />
           </div>
           <div className="sm:w-64 flex">
@@ -207,12 +188,28 @@ const ProjectsPage = () => {
                 </div>
               ))}
             </div>
-          ) : filteredProjects.length === 0 ? (
+          ) : error ? (
+            <div className="text-center py-12">
+              <div className="bg-red-50 rounded-lg p-6 max-w-md mx-auto">
+                <h3 className="text-lg font-medium text-red-800 mb-2">Error</h3>
+                <p className="text-red-700 mb-4">{error}</p>
+                <button
+                  onClick={() => fetchProjects()}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          ) : projects.length === 0 ? (
             <div className="text-center py-12">
               <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-lg font-medium text-gray-900">No projects found</h3>
               <p className="mt-1 text-sm text-gray-500">
-                Try adjusting your search or filter to find what you&apos;re looking for.
+                {searchTerm 
+                  ? `No projects match "${searchTerm}"`
+                  : "No projects available for the selected filter."
+                }
               </p>
               <div className="mt-6">
                 <button
@@ -228,55 +225,78 @@ const ProjectsPage = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredProjects.map((project) => (
-                <Link href={`/projects/${project.id}`} key={project.id}>
-                  <div className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300 cursor-pointer border border-gray-100">
-                    <div className="px-4 py-5 sm:p-6">
-                      <div className="flex justify-between">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {project.category}
-                        </span>
-                        {project.featured && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Featured
+            <>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {projects.map((project) => (
+                  <Link href={`/projects/${project.id}`} key={project.id}>
+                    <div className="bg-white overflow-hidden shadow-md rounded-lg hover:shadow-lg transition-shadow duration-300 cursor-pointer border border-gray-100 h-full">
+                      <div className="px-4 py-5 sm:p-6 flex flex-col h-full">
+                        <div className="flex justify-between">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {project.category}
                           </span>
-                        )}
-                      </div>
-                      <h3 className="mt-3 text-lg font-medium text-gray-900 group-hover:text-blue-600">{project.title}</h3>
-                      <p className="mt-1 text-sm text-gray-500 line-clamp-2">{project.description}</p>
-                      <div className="mt-4">
-                        <div className="flex space-x-2 flex-wrap">
-                          {project.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 mt-1"
-                            >
-                              {tag}
+                          {project.featured && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              Featured
                             </span>
-                          ))}
+                          )}
                         </div>
-                      </div>
-                      <div className="mt-4 flex justify-between items-center">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Users className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                          <span>{project.members} Members</span>
+                        <h3 className="mt-3 text-lg font-medium text-gray-900 group-hover:text-blue-600">{project.title}</h3>
+                        <p className="mt-1 text-sm text-gray-500 line-clamp-2">{project.description}</p>
+                        <div className="mt-4 flex-grow">
+                          <div className="flex space-x-2 flex-wrap">
+                            {project.tags && project.tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 mt-1"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                          <span>{project.lastUpdated}</span>
+                        <div className="mt-4 flex justify-between items-center">
+                          <div className="flex items-center text-sm text-gray-500">
+                            <Users className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                            <span>{project.members} Members</span>
+                          </div>
+                          <div className="flex items-center text-sm text-gray-500">
+                            <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                            <span>{formatDate(project.lastUpdated)}</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="mt-4 flex justify-end">
-                        <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500">
-                          View details <ArrowUpRight className="ml-1 h-4 w-4" />
-                        </span>
+                        <div className="mt-4 flex justify-end">
+                          <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500">
+                            View details <ArrowUpRight className="ml-1 h-4 w-4" />
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+              
+              {/* Load More Button */}
+              {hasMore && (
+                <div className="mt-8 flex justify-center">
+                  <button
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    {loadingMore ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Loading...
+                      </>
+                    ) : 'Load More Projects'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

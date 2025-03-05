@@ -1,4 +1,5 @@
-// @/pages/dashboard/index.js
+// File path: @/pages/dashboard/index.js
+
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -19,8 +20,11 @@ import {
   PenSquare,
   FileText,
   Search,
-  ChevronRight
+  ChevronRight,
+  Loader,
+  AlertCircle
 } from 'lucide-react';
+import { getUserProjects } from '@/services/projectService';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -28,131 +32,96 @@ const Dashboard = () => {
   const [recentChats, setRecentChats] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Fetch user data including projects
   useEffect(() => {
-    // Simulate fetching data
-    const fetchData = async () => {
+    const fetchUserData = async () => {
+      if (!user) return;
+      
       try {
         setLoading(true);
         
-        // In a real implementation, these would be API calls
-        // For demo, simulate API calls with timeouts
-        const projectsPromise = new Promise(resolve => {
-          setTimeout(() => {
-            resolve([
-              {
-                id: '1',
-                title: 'Climate Change Impact Analysis',
-                status: 'In Progress',
-                collaborators: 4,
-                lastUpdated: '2025-02-28T10:30:00Z'
-              },
-              {
-                id: '2',
-                title: 'Machine Learning for Medical Diagnostics',
-                status: 'Planning',
-                collaborators: 3,
-                lastUpdated: '2025-02-25T14:15:00Z'
-              },
-              {
-                id: '3',
-                title: 'Renewable Energy Optimization',
-                status: 'Completed',
-                collaborators: 5,
-                lastUpdated: '2025-02-10T09:45:00Z'
-              }
-            ]);
-          }, 800);
-        });
+        // Fetch user's projects from Firestore
+        const projectsData = await getUserProjects(user.uid);
+        setProjects(projectsData);
         
-        const chatsPromise = new Promise(resolve => {
-          setTimeout(() => {
-            resolve([
-              {
-                id: 'C0123',
-                name: 'research-collaboration',
-                type: 'channel',
-                lastMessage: 'I just uploaded the newest dataset for our analysis.',
-                sender: 'Robert Johnson',
-                time: '2025-03-04T09:30:00Z',
-                unread: true
-              },
-              {
-                id: 'D0125',
-                name: 'Emma Williams',
-                type: 'direct',
-                lastMessage: 'Could we schedule a call to discuss the methodology?',
-                sender: 'Emma Williams',
-                time: '2025-03-03T15:45:00Z',
-                unread: false
-              },
-              {
-                id: 'C0124',
-                name: 'project-updates',
-                type: 'channel',
-                lastMessage: 'The latest paper has been accepted for publication!',
-                sender: 'Jane Smith',
-                time: '2025-03-02T11:20:00Z',
-                unread: false
-              }
-            ]);
-          }, 1000);
-        });
-        
-        const notificationsPromise = new Promise(resolve => {
-          setTimeout(() => {
-            resolve([
-              {
-                id: '1',
-                type: 'mention',
-                message: 'Robert Johnson mentioned you in #research-collaboration',
-                time: '2025-03-04T08:15:00Z',
-                read: false
-              },
-              {
-                id: '2',
-                type: 'project',
-                message: 'New paper added to "Climate Change Impact Analysis"',
-                time: '2025-03-03T16:30:00Z',
-                read: true
-              },
-              {
-                id: '3',
-                type: 'research',
-                message: 'New citation for your paper "Machine Learning Applications"',
-                time: '2025-03-03T11:45:00Z',
-                read: true
-              }
-            ]);
-          }, 1200);
-        });
-        
-        // Wait for all promises to resolve
-        const [projectsData, chatsData, notificationsData] = await Promise.all([
-          projectsPromise,
-          chatsPromise,
-          notificationsPromise
+        // Mock data for chats and notifications for demo purposes
+        // In a real app, these would be fetched from Firestore as well
+        setRecentChats([
+          {
+            id: 'C0123',
+            name: 'research-collaboration',
+            type: 'channel',
+            lastMessage: 'I just uploaded the newest dataset for our analysis.',
+            sender: 'Robert Johnson',
+            time: '2025-03-04T09:30:00Z',
+            unread: true
+          },
+          {
+            id: 'D0125',
+            name: 'Emma Williams',
+            type: 'direct',
+            lastMessage: 'Could we schedule a call to discuss the methodology?',
+            sender: 'Emma Williams',
+            time: '2025-03-03T15:45:00Z',
+            unread: false
+          },
+          {
+            id: 'C0124',
+            name: 'project-updates',
+            type: 'channel',
+            lastMessage: 'The latest paper has been accepted for publication!',
+            sender: 'Jane Smith',
+            time: '2025-03-02T11:20:00Z',
+            unread: false
+          }
         ]);
         
-        setProjects(projectsData);
-        setRecentChats(chatsData);
-        setNotifications(notificationsData);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        setNotifications([
+          {
+            id: '1',
+            type: 'mention',
+            message: 'Robert Johnson mentioned you in #research-collaboration',
+            time: '2025-03-04T08:15:00Z',
+            read: false
+          },
+          {
+            id: '2',
+            type: 'project',
+            message: 'New paper added to "Climate Change Impact Analysis"',
+            time: '2025-03-03T16:30:00Z',
+            read: true
+          },
+          {
+            id: '3',
+            type: 'research',
+            message: 'New citation for your paper "Machine Learning Applications"',
+            time: '2025-03-03T11:45:00Z',
+            read: true
+          }
+        ]);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load your dashboard data. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    fetchUserData();
+  }, [user]);
 
+  // Helper function to get status color
   const getStatusColor = (status) => {
     switch (status) {
+      case 'active':
       case 'In Progress':
         return 'bg-yellow-100 text-yellow-800';
+      case 'planning':
       case 'Planning':
         return 'bg-blue-100 text-blue-800';
+      case 'completed':
       case 'Completed':
         return 'bg-green-100 text-green-800';
       default:
@@ -173,6 +142,14 @@ const Dashboard = () => {
     } else {
       return format(date, 'MMM d');
     }
+  };
+  
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Unknown date';
+    
+    const date = new Date(dateString);
+    return format(date, 'MMM d, yyyy');
   };
   
   // Get notification type icon
@@ -231,7 +208,7 @@ const Dashboard = () => {
                 {loading ? (
                   <div className="h-8 bg-gray-200 rounded animate-pulse w-12"></div>
                 ) : (
-                  projects.filter(project => project.status === 'In Progress').length
+                  projects.filter(project => project.status === 'active').length
                 )}
               </dd>
             </div>
@@ -243,7 +220,9 @@ const Dashboard = () => {
                 {loading ? (
                   <div className="h-8 bg-gray-200 rounded animate-pulse w-12"></div>
                 ) : (
-                  projects.reduce((total, project) => total + project.collaborators, 0)
+                  // Sum all members across projects, but this is not accurate as there may be overlap
+                  // In a real app, this would be a separate query
+                  projects.reduce((total, project) => total + (project.members || 0), 0)
                 )}
               </dd>
             </div>
@@ -296,6 +275,34 @@ const Dashboard = () => {
                     <div className="h-4 bg-gray-200 rounded w-5/6"></div>
                   </div>
                 </div>
+              ) : error ? (
+                <div className="px-4 py-10 sm:px-6 text-center">
+                  <AlertCircle className="mx-auto h-10 w-10 text-red-500 mb-4" />
+                  <p className="text-red-600 mb-4">{error}</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : projects.length === 0 ? (
+                <div className="px-4 py-10 sm:px-6 text-center">
+                  <Book className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No projects yet</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Get started by creating a new research project.
+                  </p>
+                  <div className="mt-6">
+                    <Link
+                      href="/projects/create"
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                      New Project
+                    </Link>
+                  </div>
+                </div>
               ) : (
                 <ul className="divide-y divide-gray-200">
                   {projects.map((project) => (
@@ -306,7 +313,10 @@ const Dashboard = () => {
                             <div className="flex items-center">
                               <p className="text-sm font-medium text-blue-600 truncate">{project.title}</p>
                               <div className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(project.status)}`}>
-                                {project.status}
+                                {project.status === 'active' ? 'In Progress' : 
+                                 project.status === 'planning' ? 'Planning' : 
+                                 project.status === 'completed' ? 'Completed' : 
+                                 project.status}
                               </div>
                             </div>
                             <div className="ml-2 flex-shrink-0 flex">
@@ -329,13 +339,13 @@ const Dashboard = () => {
                             <div className="sm:flex">
                               <p className="flex items-center text-sm text-gray-500">
                                 <Users className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                                {project.collaborators} Collaborators
+                                {project.members || 0} Collaborators
                               </p>
                             </div>
                             <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                               <Calendar className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
                               <p>
-                                Last updated on <time dateTime={project.lastUpdated}>{format(new Date(project.lastUpdated), 'MMM d, yyyy')}</time>
+                                Last updated on <time dateTime={project.lastUpdated}>{formatDate(project.lastUpdated)}</time>
                               </p>
                             </div>
                           </div>
@@ -344,25 +354,6 @@ const Dashboard = () => {
                     </li>
                   ))}
                 </ul>
-              )}
-              
-              {projects.length === 0 && !loading && (
-                <div className="px-4 py-10 sm:px-6 text-center">
-                  <Book className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No projects yet</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Get started by creating a new research project.
-                  </p>
-                  <div className="mt-6">
-                    <Link
-                      href="/projects/create"
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      <Plus className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                      New Project
-                    </Link>
-                  </div>
-                </div>
               )}
             </div>
             
@@ -396,6 +387,16 @@ const Dashboard = () => {
                       </div>
                     ))}
                   </div>
+                </div>
+              ) : error ? (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-red-600 mb-4">{error}</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700"
+                  >
+                    Try Again
+                  </button>
                 </div>
               ) : recentChats.length > 0 ? (
                 <ul className="divide-y divide-gray-200">
@@ -489,6 +490,16 @@ const Dashboard = () => {
                       </div>
                     ))}
                   </div>
+                </div>
+              ) : error ? (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-red-600 mb-4">{error}</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700"
+                  >
+                    Try Again
+                  </button>
                 </div>
               ) : notifications.length > 0 ? (
                 <ul className="divide-y divide-gray-200">

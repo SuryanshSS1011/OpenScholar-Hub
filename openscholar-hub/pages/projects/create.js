@@ -1,4 +1,5 @@
-// @/pages/projects/create.js
+// File path: @/pages/projects/create.js
+
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -13,9 +14,13 @@ import {
   Search,
   ChevronRight,
   BookOpen,
-  X
+  X,
+  AlertCircle,
+  Loader
 } from 'lucide-react';
 import Link from 'next/link';
+import { createProject } from '@/services/projectService';
+import { searchScholar, advancedSearch } from '@/utils/scholarApi';
 
 const CreateProject = () => {
   const { user } = useAuth();
@@ -28,7 +33,8 @@ const CreateProject = () => {
     category: '',
     visibility: 'private',
     tags: [],
-    relatedResearch: []
+    relatedResearch: [],
+    status: 'planning'
   });
   
   const [tag, setTag] = useState('');
@@ -36,6 +42,10 @@ const CreateProject = () => {
   const [researchQuery, setResearchQuery] = useState('');
   const [researchResults, setResearchResults] = useState([]);
   const [researchLoading, setResearchLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
+  const [searchError, setSearchError] = useState(null);
   
   // Handle pre-populated research if coming from research article
   useEffect(() => {
@@ -60,6 +70,14 @@ const CreateProject = () => {
       ...prev,
       [name]: value
     }));
+    
+    // Clear error for this field if it exists
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: null
+      }));
+    }
   };
   
   const handleAddTag = () => {
@@ -92,35 +110,59 @@ const CreateProject = () => {
     if (!researchQuery.trim()) return;
     
     setResearchLoading(true);
+    setSearchError(null);
     
     try {
-      // In a real app, this would call the API
-      // For demo purposes, simulate API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Use the existing scholarApi utility to search for articles
+      const data = await searchScholar(researchQuery);
       
-      // Mock search results
-      setResearchResults([
-        {
-          id: 'gVDgNAq_jJMJ',
-          title: 'Survey of important issues in UAV communication networks',
-          authors: 'L Gupta, R Jain, G Vaszkun',
-          year: 2015
-        },
-        {
-          id: 'XRt1dfhq2_8J',
-          title: 'Introduction to UAV systems',
-          authors: 'PG Fahlstrom, TJ Gleason, MH Sadraey',
-          year: 2022
-        },
-        {
-          id: 'AYl-XXuZligJ',
-          title: 'Review of the current state of UAV regulations',
-          authors: 'C Stöcker, R Bennett, F Nex, M Gerke, J Zevenbergen',
-          year: 2017
-        }
-      ]);
+      if (data && data.articles && data.articles.length > 0) {
+        // Format the results for display
+        const formattedResults = data.articles.map(article => ({
+          id: article.id || `article_${Math.random().toString(36).substring(2, 10)}`,
+          title: article.title || 'Unknown Title',
+          authors: article.author?.names || 'Unknown Authors',
+          year: article.year || new Date().getFullYear()
+        }));
+        
+        setResearchResults(formattedResults);
+      } else {
+        setResearchResults([]);
+        setSearchError('No results found. Try a different search term.');
+      }
     } catch (error) {
       console.error('Error searching for research:', error);
+      setSearchError(error.message || 'Failed to search for articles. Please try again.');
+    } finally {
+      setResearchLoading(false);
+    }
+  };
+  
+  // Advanced search with filters if needed
+  const handleAdvancedSearch = async (filters) => {
+    setResearchLoading(true);
+    setSearchError(null);
+    
+    try {
+      // Use the advanced search functionality
+      const articles = await advancedSearch(filters);
+      
+      if (articles && articles.length > 0) {
+        const formattedResults = articles.map(article => ({
+          id: article.id || `article_${Math.random().toString(36).substring(2, 10)}`,
+          title: article.title || 'Unknown Title',
+          authors: article.author?.names || 'Unknown Authors',
+          year: article.year || new Date().getFullYear()
+        }));
+        
+        setResearchResults(formattedResults);
+      } else {
+        setResearchResults([]);
+        setSearchError('No results found with these filters. Try adjusting your search criteria.');
+      }
+    } catch (error) {
+      console.error('Error with advanced search:', error);
+      setSearchError(error.message || 'Advanced search failed. Please try again.');
     } finally {
       setResearchLoading(false);
     }
@@ -138,14 +180,77 @@ const CreateProject = () => {
     }
   };
   
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.title.trim()) {
+      errors.title = 'Project title is required';
+    }
+    
+    if (!formData.description.trim()) {
+      errors.description = 'Project description is required';
+    }
+    
+    if (!formData.category) {
+      errors.category = 'Please select a category';
+    }
+    
+    return errors;
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // In a real app, this would submit to an API
-    console.log('Submitting project:', formData);
+    // Validate form
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      // Scroll to the first error
+      const firstErrorField = document.getElementById(Object.keys(errors)[0]);
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstErrorField.focus();
+      }
+      return;
+    }
     
-    // Redirect to projects page after submission
-    router.push('/projects');
+    if (!user || !user.uid) {
+      setSubmitError('You must be logged in to create a project');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setSubmitError(null);
+    
+    try {
+      // Prepare project data
+      const projectData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        isPrivate: formData.visibility === 'private',
+        tags: formData.tags,
+        status: formData.status,
+        relatedResearch: formData.relatedResearch.map(item => ({
+          id: item.id,
+          title: item.title
+        }))
+      };
+      
+      // Create project using our service
+      const createdProject = await createProject(projectData, user.uid);
+      
+      console.log('Project created successfully:', createdProject);
+      
+      // Navigate to the new project page
+      router.push(`/projects/${createdProject.id}`);
+    } catch (error) {
+      console.error('Error creating project:', error);
+      setSubmitError(error.message || 'Failed to create project. Please try again.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -185,6 +290,22 @@ const CreateProject = () => {
           </p>
         </div>
         
+        {/* Error alert */}
+        {submitError && (
+          <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <AlertCircle className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">
+                  {submitError}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
           <div className="px-4 py-5 sm:px-6 border-b border-gray-200 bg-gray-50">
             <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -208,9 +329,16 @@ const CreateProject = () => {
                 required
                 value={formData.title}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  formErrors.title 
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } focus:outline-none focus:ring-2 focus:border-transparent transition duration-150`}
                 placeholder="Enter a descriptive title for your project"
               />
+              {formErrors.title && (
+                <p className="mt-1 text-sm text-red-600">{formErrors.title}</p>
+              )}
             </div>
             
             {/* Description */}
@@ -225,9 +353,16 @@ const CreateProject = () => {
                 required
                 value={formData.description}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 resize-y"
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  formErrors.description 
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } focus:outline-none focus:ring-2 focus:border-transparent transition duration-150 resize-y`}
                 placeholder="Describe your research project, goals, and methodology..."
               />
+              {formErrors.description && (
+                <p className="mt-1 text-sm text-red-600">{formErrors.description}</p>
+              )}
             </div>
             
             {/* Category */}
@@ -241,7 +376,11 @@ const CreateProject = () => {
                 required
                 value={formData.category}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 bg-white"
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  formErrors.category 
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                } focus:outline-none focus:ring-2 focus:border-transparent transition duration-150 bg-white`}
               >
                 <option value="">Select a category</option>
                 <option value="Computer Science">Computer Science</option>
@@ -255,6 +394,27 @@ const CreateProject = () => {
                 <option value="Engineering">Engineering</option>
                 <option value="Humanities">Humanities</option>
                 <option value="Other">Other</option>
+              </select>
+              {formErrors.category && (
+                <p className="mt-1 text-sm text-red-600">{formErrors.category}</p>
+              )}
+            </div>
+            
+            {/* Project Status */}
+            <div className="w-full">
+              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                Project Status
+              </label>
+              <select
+                id="status"
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150 bg-white"
+              >
+                <option value="planning">Planning</option>
+                <option value="active">In Progress</option>
+                <option value="completed">Completed</option>
               </select>
             </div>
             
@@ -373,7 +533,7 @@ const CreateProject = () => {
                 </button>
               </div>
               
-                              {/* Research Search */}
+              {/* Research Search */}
               {showResearchSearch && (
                 <div className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <form onSubmit={handleResearchSearch} className="flex gap-2">
@@ -394,9 +554,24 @@ const CreateProject = () => {
                       disabled={researchLoading || !researchQuery.trim()}
                       className="px-4 py-2 rounded-lg border border-transparent shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
                     >
-                      {researchLoading ? 'Searching...' : 'Search'}
+                      {researchLoading ? (
+                        <span className="flex items-center">
+                          <Loader className="animate-spin h-4 w-4 mr-2" />
+                          Searching...
+                        </span>
+                      ) : (
+                        'Search'
+                      )}
                     </button>
                   </form>
+                  
+                  {/* Search Error */}
+                  {searchError && (
+                    <div className="mt-2 p-2 bg-red-50 text-red-700 text-sm rounded-md flex items-center">
+                      <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                      <span>{searchError}</span>
+                    </div>
+                  )}
                   
                   {/* Search Results */}
                   {researchResults.length > 0 && (
@@ -490,7 +665,7 @@ const CreateProject = () => {
             </div>
             
             {/* Action Buttons */}
-                          <div className="pt-5 mt-6 border-t border-gray-200 flex flex-wrap justify-end gap-3">
+            <div className="pt-5 mt-6 border-t border-gray-200 flex flex-wrap justify-end gap-3">
               <Link
                 href="/projects"
                 className="px-4 py-2 rounded-lg border border-gray-300 shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
@@ -499,9 +674,17 @@ const CreateProject = () => {
               </Link>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-lg border border-transparent shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
+                disabled={isSubmitting}
+                className="px-4 py-2 rounded-lg border border-transparent shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
-                Create Project
+                {isSubmitting ? (
+                  <>
+                    <Loader className="animate-spin h-4 w-4 mr-2" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Project'
+                )}
               </button>
             </div>
           </form>
