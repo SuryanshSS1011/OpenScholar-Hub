@@ -1,5 +1,3 @@
-// Updates to @/pages/profile.js
-
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useAuth } from '@/context/AuthContext';
@@ -8,6 +6,7 @@ import Layout from '@/components/Layout';
 import ProfileResearch from '@/components/ProfileResearch';
 import SavedArticles from '@/components/SavedArticles';
 import { User, Mail, BookOpen, Calendar, MapPin, Globe, PenSquare } from 'lucide-react';
+import Link from 'next/link';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -185,10 +184,12 @@ const Profile = () => {
               <h3 className="text-lg font-medium text-gray-900 mb-3">Research Tools</h3>
               <ul className="space-y-3">
                 <li>
-                  <a href="/research" className="text-blue-600 hover:underline flex items-center">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Search Academic Literature
-                  </a>
+                  <Link href="/research">
+                    <a className="text-blue-600 hover:underline flex items-center">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Search Academic Literature
+                    </a>
+                  </Link>
                 </li>
                 <li>
                   <a href="/dashboard/saved" className="text-blue-600 hover:underline flex items-center">

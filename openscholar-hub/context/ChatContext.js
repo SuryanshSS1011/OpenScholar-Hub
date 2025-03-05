@@ -286,7 +286,7 @@ export function ChatProvider({ children }) {
         return () => {
             socketRef.current.off('slack_event', handleSlackEvent);
         };
-    }, []);
+    }, [fetchChannels, handleNewMessage, handleReactionAdded, handleReactionRemoved]);
 
     // Fetch channels from API
     const fetchChannels = useCallback(async () => {

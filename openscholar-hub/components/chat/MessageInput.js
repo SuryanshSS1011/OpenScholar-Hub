@@ -213,7 +213,7 @@ const MessageInput = ({ channelId, dmId, threadTs, onSend }) => {
   // Get file icon based on type
   const getFileIcon = (fileType) => {
     if (fileType.startsWith('image/')) {
-      return <Image className="h-4 w-4 text-blue-500" />;
+      return <Image className="h-4 w-4 text-blue-500" alt="" />;
     } else {
       return <Paperclip className="h-4 w-4 text-gray-500" />;
     }

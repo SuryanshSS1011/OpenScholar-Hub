@@ -7,6 +7,7 @@ import Layout from '@/components/Layout';
 import ScholarSearch from '@/components/ScholarSearch';
 import ResearchRecommendations from '@/components/ResearchRecommendations';
 import { BookOpen, Database, Download, Users } from 'lucide-react';
+import Link from 'next/link';
 
 const ResearchPage = () => {
   const router = useRouter();
@@ -51,34 +52,44 @@ const ResearchPage = () => {
               <h3 className="text-lg font-medium text-gray-900 mb-3">Popular Research Topics</h3>
               <ul className="space-y-2">
                 <li>
-                  <a href="/research?q=artificial+intelligence" className="text-blue-600 hover:underline flex items-center">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Artificial Intelligence
-                  </a>
+                  <Link href="/research?q=artificial+intelligence">
+                    <a className="text-blue-600 hover:underline flex items-center">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Artificial Intelligence
+                    </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/research?q=climate+change" className="text-blue-600 hover:underline flex items-center">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Climate Change
-                  </a>
+                  <Link href="/research?q=climate+change">
+                    <a className="text-blue-600 hover:underline flex items-center">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Climate Change
+                    </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/research?q=quantum+computing" className="text-blue-600 hover:underline flex items-center">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Quantum Computing
-                  </a>
+                  <Link href="/research?q=quantum+computing">
+                    <a className="text-blue-600 hover:underline flex items-center">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Quantum Computing
+                    </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/research?q=renewable+energy" className="text-blue-600 hover:underline flex items-center">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Renewable Energy
-                  </a>
+                  <Link href="/research?q=renewable+energy">
+                    <a className="text-blue-600 hover:underline flex items-center">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Renewable Energy
+                    </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/research?q=machine+learning" className="text-blue-600 hover:underline flex items-center">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Machine Learning
-                  </a>
+                  <Link href="/research?q=machine+learning">
+                    <a className="text-blue-600 hover:underline flex items-center">
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Machine Learning
+                    </a>
+                  </Link>
                 </li>
               </ul>
             </div>
