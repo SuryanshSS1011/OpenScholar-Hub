@@ -1,40 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# OpenScholar Hub
+
+A research collaboration platform that democratizes access to research by enabling students, researchers, and professionals to collaborate on projects, share datasets, and publish findings in an open environment.
+
+## Features
+
+- **Research Collaboration**: Create and manage research projects with team members
+- **Real-time Chat**: Integrated chat system for seamless communication
+- **Article Management**: Discover, save, and discuss research articles
+- **User Profiles**: Comprehensive profiles showcasing research interests and contributions
+- **External Integrations**: Connect with Slack, Discord, and Google Scholar
+- **Authentication**: Secure authentication with Google OAuth
+
+## Tech Stack
+
+- **Frontend**: Next.js 15 with React 19
+- **Styling**: Tailwind CSS with custom design system
+- **Authentication**: Firebase Auth
+- **Database**: Firebase Firestore
+- **Real-time**: Socket.io for chat functionality
+- **External APIs**: Slack, Discord, Google Scholar
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd OpenScholar-Hub
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+```bash
+cp .env.local.example .env.local
+# Edit .env.local with your Firebase and API credentials
+```
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+4. Run the development server:
+```bash
+npm run dev
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Available Scripts
 
-## Learn More
+- `npm run dev` - Start development server
+- `npm run build` - Create production build
+- `npm run start` - Start production server  
+- `npm run lint` - Run ESLint checks
 
-To learn more about Next.js, take a look at the following resources:
+## Environment Variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+Create a `.env.local` file with the following variables:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```env
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 
-## Deploy on Vercel
+# External API Keys
+SLACK_BOT_TOKEN=your_slack_token
+DISCORD_TOKEN=your_discord_token
+SCHOLAR_API_KEY=your_scholar_key
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contributing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests and linting
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
