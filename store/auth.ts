@@ -1,16 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { persist } from 'zustand/middleware';
-
-export interface User {
-  id: string;
-  email: string;
-  displayName?: string;
-  photoURL?: string;
-  emailVerified: boolean;
-  createdAt: string;
-  lastLoginAt?: string;
-}
+import { User } from '@/types';
 
 interface AuthState {
   user: User | null;

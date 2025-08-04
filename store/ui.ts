@@ -1,39 +1,5 @@
 import { create } from 'zustand';
-
-interface UIState {
-  // Global loading states
-  globalLoading: boolean;
-  loadingText: string;
-  
-  // Modal states
-  activeModal: string | null;
-  modalProps: Record<string, any>;
-  
-  // Sidebar and navigation
-  sidebarOpen: boolean;
-  mobileMenuOpen: boolean;
-  
-  // Notifications/Toasts
-  notifications: Notification[];
-  
-  // Theme
-  theme: 'light' | 'dark' | 'system';
-  
-  // Layout preferences
-  layoutCompact: boolean;
-}
-
-interface Notification {
-  id: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  title: string;
-  message?: string;
-  duration?: number;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-}
+import { UIState, Notification } from '@/types';
 
 interface UIActions {
   // Global loading

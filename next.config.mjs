@@ -6,7 +6,13 @@ const nextConfig = {
   
   // ESLint configuration
   eslint: {
-    ignoreDuringBuilds: true, // Temporarily disable for build test
+    ignoreDuringBuilds: false, // Enable ESLint during builds for better code quality
+    dirs: ['pages', 'components', 'lib', 'utils', 'services', 'context', 'hooks', 'store'], // Only lint app code, not config files
+  },
+  
+  // TypeScript configuration
+  typescript: {
+    ignoreBuildErrors: false, // Enable TypeScript checking during builds
   },
   
   // Optimize images
